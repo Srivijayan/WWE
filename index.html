@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ring Rivals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="game" width="960" height="540" aria-label="Ring Rivals arena"></canvas>
+  </div>
+
+  <section id="screen-title" class="screen">
+    <h1 class="logo">Ring Rivals<span>Wrestling</span></h1>
+    <p class="tagline">10 wrestlers. 10 entrance themes. One ring.</p>
+    <div class="menu">
+      <button class="btn primary" id="btn-play" type="button">Play</button>
+      <button class="btn" id="btn-howto" type="button">How to play</button>
+      <button class="btn" id="btn-sound" type="button">Sound</button>
+    </div>
+    <p class="record" id="record"></p>
+  </section>
+
+  <section id="screen-howto" class="screen" hidden>
+    <h2 class="heading">How to play</h2>
+    <div class="panel howto">
+      <p>Win by knockout (HP to 0) or a 3-count pin on an opponent under 25% HP. Landing and taking hits fills your special meter: 50 unlocks your signature move, 100 unlocks your finisher.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Action</th><th>Player 1</th><th>Player 2</th></tr></thead>
+          <tbody>
+            <tr><td>Move</td><td>A / D</td><td>← / →</td></tr>
+            <tr><td>Jump / climb corner</td><td>W</td><td>↑</td></tr>
+            <tr><td>Block</td><td>S</td><td>↓</td></tr>
+            <tr><td>Run (hold)</td><td>Left Shift</td><td>Right Ctrl or Right Shift</td></tr>
+            <tr><td>Punch</td><td>F</td><td>J</td></tr>
+            <tr><td>Kick</td><td>G</td><td>K</td></tr>
+            <tr><td>Grapple (+ direction to whip)</td><td>H</td><td>L</td></tr>
+            <tr><td>Signature / finisher</td><td>R</td><td>I</td></tr>
+            <tr><td>Pin a downed opponent</td><td>E</td><td>U</td></tr>
+            <tr><td>Pause</td><td>Esc</td><td>Esc</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>Three punches in a row make a combo; the third hits 50% harder.</li>
+        <li>Blocking stops strikes but not grapples. Press grapple just before a grab lands to reverse it.</li>
+        <li>Punch while running for a running strike. Punch a downed opponent to stomp.</li>
+        <li>Press up in a corner to climb the turnbuckle, then kick to dive.</li>
+        <li>When pinned, mash your grapple button to kick out. Below 25% HP it gets harder.</li>
+        <li>Under 30% HP your special meter fills 50% faster.</li>
+      </ul>
+    </div>
+    <button class="btn" data-back="title" type="button">Back</button>
+  </section>
+
+  <section id="screen-sound" class="screen" hidden>
+    <h2 class="heading">Sound</h2>
+    <div class="panel sound">
+      <label for="vol-music">Music <input id="vol-music" type="range" min="0" max="1" step="0.05"></label>
+      <label for="vol-sfx">Effects and crowd <input id="vol-sfx" type="range" min="0" max="1" step="0.05"></label>
+      <button class="btn small" id="btn-mute" type="button">Mute</button>
+    </div>
+    <button class="btn" data-back="title" type="button">Back</button>
+  </section>
+
+  <section id="screen-mode" class="screen" hidden>
+    <h2 class="heading">Choose a mode</h2>
+    <div class="modes">
+      <div class="panel mode">
+        <h3>1 Player vs CPU</h3>
+        <p>Pick a difficulty.</p>
+        <div class="menu row">
+          <button class="btn" data-diff="easy" type="button">Easy</button>
+          <button class="btn primary" data-diff="normal" type="button">Normal</button>
+          <button class="btn" data-diff="hard" type="button">Hard</button>
+        </div>
+      </div>
+      <div class="panel mode">
+        <h3>2 Players</h3>
+        <p>One keyboard, or two gamepads.</p>
+        <button class="btn" id="btn-2p" type="button">Start</button>
+      </div>
+    </div>
+    <button class="btn" data-back="title" type="button">Back</button>
+  </section>
+
+  <section id="screen-select" class="screen" hidden>
+    <h2 class="heading" id="select-title">Choose your wrestler</h2>
+    <div class="select-wrap">
+      <div class="pp p1" id="pp-0"></div>
+      <div class="roster" id="roster"></div>
+      <div class="pp p2" id="pp-1"></div>
+    </div>
+    <p class="hint" id="select-hint"></p>
+    <div class="menu row">
+      <button class="btn" data-back="mode" type="button">Back</button>
+    </div>
+  </section>
+
+  <section id="screen-pause" class="screen" hidden>
+    <h2 class="heading">Paused</h2>
+    <div class="panel sound">
+      <label for="pause-music">Music <input id="pause-music" type="range" min="0" max="1" step="0.05"></label>
+      <label for="pause-sfx">Effects and crowd <input id="pause-sfx" type="range" min="0" max="1" step="0.05"></label>
+    </div>
+    <div class="menu">
+      <button class="btn primary" id="btn-resume" type="button">Resume</button>
+      <button class="btn" id="btn-quit" type="button">Quit to title</button>
+    </div>
+  </section>
+
+  <section id="screen-results" class="screen" hidden>
+    <p class="eyebrow" id="res-method"></p>
+    <h2 class="logo small" id="res-winner"></h2>
+    <div class="panel results">
+      <div class="table-wrap"><table id="res-table"></table></div>
+    </div>
+    <div class="menu row">
+      <button class="btn primary" id="btn-rematch" type="button">Rematch</button>
+      <button class="btn" id="btn-new" type="button">New wrestlers</button>
+      <button class="btn" id="btn-menu" type="button">Main menu</button>
+    </div>
+  </section>
+
+  <div id="touch" hidden>
+    <div class="pad">
+      <button type="button" data-a="left" aria-label="Left">◀</button>
+      <button type="button" data-a="up" aria-label="Jump">▲</button>
+      <button type="button" data-a="right" aria-label="Right">▶</button>
+      <button type="button" data-a="down" aria-label="Block">BLK</button>
+      <button type="button" data-a="run" aria-label="Run">RUN</button>
+    </div>
+    <div class="pad">
+      <button type="button" data-a="punch">PUN</button>
+      <button type="button" data-a="kick">KCK</button>
+      <button type="button" data-a="grapple">GRB</button>
+      <button type="button" data-a="special">SPL</button>
+      <button type="button" data-a="pin">PIN</button>
+    </div>
+  </div>
+  <button id="btn-pause" class="corner-btn" type="button" hidden aria-label="Pause">II</button>
+</div>
+
+<script src="src/roster.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/input.js"></script>
+<script src="src/fighter.js"></script>
+<script src="src/combat.js"></script>
+<script src="src/ai.js"></script>
+<script src="src/render.js"></script>
+<script src="src/state.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
