@@ -154,16 +154,30 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
 #touch .pad { display: grid; grid-template-columns: repeat(3, 54px); gap: 8px; pointer-events: auto; }
 #touch button {
   width: 54px; height: 54px; border-radius: 50%;
-  background: rgba(232, 235, 242, 0.12); border: 2px solid rgba(232, 235, 242, 0.35); color: var(--canvas);
+  background: rgba(12, 14, 28, 0.55); border: 2px solid rgba(232, 235, 242, 0.5); color: var(--canvas);
   font-family: var(--display); font-size: 11px; touch-action: none; user-select: none; -webkit-user-select: none;
 }
 #touch button.on { background: var(--gold); color: var(--gold-ink); }
 .corner-btn {
-  position: fixed; bottom: max(10px, env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+  position: fixed; top: max(8px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
   width: 38px; height: 38px; border: 1px solid var(--line); background: rgba(23, 27, 56, 0.8); color: var(--canvas);
   font-family: var(--display); cursor: pointer; opacity: 0.6;
 }
 .corner-btn:hover, .corner-btn:focus-visible { opacity: 1; outline: 2px solid var(--gold); }
+
+/* Phones held in portrait (or with rotation locked): turn the whole game sideways
+   so it always plays in landscape. Hold the phone with its right edge up. */
+@media (orientation: portrait) and (pointer: coarse) {
+  #app {
+    inset: auto; top: 0; left: 100vw;
+    width: 100vh; height: 100vw;
+    width: 100dvh;
+    transform-origin: top left; transform: rotate(90deg);
+  }
+  #stage { width: min(100vh, calc(100vw * 16 / 9)); width: min(100dvh, calc(100vw * 16 / 9)); }
+  .screen, #touch { position: absolute; }
+  .corner-btn { position: absolute; }
+}
 
 @media (max-width: 980px) {
   .select-wrap { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

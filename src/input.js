@@ -9,7 +9,7 @@
   const ACTIONS = Object.keys(BIND[0]);
   const EDGE = ['punch', 'kick', 'grapple', 'special', 'pin', 'up'];
 
-  const held = new Set(), tapped = new Set(), touch = new Set();
+  const held = new Set(), tapped = new Set(), touch = new Set(), touchTapped = new Set();
   const cur = [{}, {}], prev = [{}, {}];
   const listeners = [];
 
@@ -40,13 +40,13 @@
     poll() {
       for (let p = 0; p < 2; p++) {
         for (const a of ACTIONS) {
-          cur[p][a] = BIND[p][a].some(c => held.has(c) || tapped.has(c)) || padState(p, a) || (p === 0 && touch.has(a));
+          cur[p][a] = BIND[p][a].some(c => held.has(c) || tapped.has(c)) || padState(p, a) || (p === 0 && (touch.has(a) || touchTapped.has(a)));
         }
       }
     },
     endFrame() {
       for (let p = 0; p < 2; p++) Object.assign(prev[p], cur[p]);
-      tapped.clear();
+      tapped.clear(); touchTapped.clear();
     },
     intent(p) {
       const c = cur[p], o = prev[p], it = {};
@@ -62,9 +62,9 @@
       return ['punch', 'kick', 'grapple', 'special', 'pin'].some(a => c[a] && !o[a]);
     },
     onKey(fn) { listeners.push(fn); },
-    touchDown(a) { touch.add(a); },
+    touchDown(a) { touch.add(a); touchTapped.add(a); },
     touchUp(a) { touch.delete(a); },
-    clearTouch() { touch.clear(); },
+    clearTouch() { touch.clear(); touchTapped.clear(); },
   };
 
   RR.blankIntent = () => ({ left: false, right: false, up: false, down: false, run: false, upPressed: false, punch: false, kick: false, grapple: false, special: false, pin: false });
