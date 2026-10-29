@@ -31,7 +31,7 @@
     }
 
     begin() {
-      this.started = true;
+      this.started = true; this.beganAt = this.frame;
       this.banner('FIGHT!', '', '#ffc531', 70);
       RR.Audio.bell(1); RR.Audio.setCrowd(0.35);
     }
@@ -70,7 +70,25 @@
     }
 
     // ---------- reading a player's intent ----------
+    // Simple controls: Attack picks punch, kick, stomp or a running strike; Grab picks a
+    // throw or a pin; any button mashes to kick out of a pin.
+    simplify(f, it) {
+      if (!it.simple) return it;
+      const o = f.opp, dist = Math.abs(o.x - f.x), oDown = o.state === 'down' || o.state === 'getup';
+      const out = Object.assign({}, it, { punch: false, kick: false, grapple: false, pin: false });
+      if (f.state === 'pinned') { out.grapple = it.attack || it.grab || it.special; out.special = false; return out; }
+      if (it.attack) {
+        if (!oDown && f.state !== 'run' && f.state !== 'perched' && dist > MOVES.punch.range && dist <= MOVES.kick.range) out.kick = true;
+        else out.punch = true;
+      }
+      if (it.grab) {
+        if (o.state === 'down' && dist < 125) out.pin = true; else out.grapple = true;
+      }
+      return out;
+    }
+
     think(f, it) {
+      it = this.simplify(f, it);
       const o = f.opp, dx = o.x - f.x, dist = Math.abs(dx), toward = Math.sign(dx) || f.facing;
       if (it.grapple) f.lastGrapPress = this.sf;
       if (it.special) f.lastSpecPress = this.sf;
@@ -89,7 +107,7 @@
         if (f.meter >= 50) return this.startMove(f, 'special');
         f.flashMsg = 'NEED 50 METER'; f.flashT = 50; return;
       }
-      if (it.grapple) return this.startMove(f, 'grapple', { whipDir: moveDir });
+      if (it.grapple) return this.startMove(f, 'grapple', { whipDir: it.simple ? 0 : moveDir });
       if (it.punch) {
         if ((o.state === 'down' || o.state === 'getup') && dist < 95) return this.startMove(f, 'stomp');
         return this.startMove(f, f.state === 'run' ? 'run' : 'punch');

@@ -329,8 +329,7 @@
       const P = m.pin, k = Math.min(1, P.presses / P.need), x = W / 2 - 150, y = 330;
       ctx.fillStyle = 'rgba(11,13,28,0.85)'; ctx.fillRect(x - 10, y - 30, 320, 62);
       ctx.fillStyle = '#fff'; ctx.font = `700 18px ${BODY}`; ctx.textAlign = 'center';
-      const key = P.on.ai ? 'CPU' : (P.on.side === 0 ? 'H' : 'L');
-      ctx.fillText(P.on.ai ? 'KICK OUT!' : `MASH ${key} TO KICK OUT`, W / 2, y - 10);
+      ctx.fillText(P.on.ai ? 'KICK OUT!' : 'MASH ANY BUTTON TO KICK OUT', W / 2, y - 10);
       ctx.fillStyle = '#2c3364'; ctx.fillRect(x, y, 300, 18);
       ctx.fillStyle = P.mashT > 0 ? '#ffffff' : '#39c6f0'; ctx.fillRect(x, y, 300 * k, 18);
     }

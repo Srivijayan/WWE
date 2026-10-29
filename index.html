@@ -29,31 +29,28 @@
   <section id="screen-howto" class="screen" hidden>
     <h2 class="heading">How to play</h2>
     <div class="panel howto">
-      <p>Win by knockout (HP to 0) or a 3-count pin on an opponent under 25% HP. Landing and taking hits fills your special meter: 50 unlocks your signature move, 100 unlocks your finisher.</p>
+      <p>Win by knockout (HP to 0) or a 3-count pin on an opponent under 25% HP. You only need the arrow keys and 3 buttons.</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Action</th><th>Player 1</th><th>Player 2</th></tr></thead>
+          <thead><tr><th>Action</th><th>1 player</th><th>2 players: P1</th><th>2 players: P2</th></tr></thead>
           <tbody>
-            <tr><td>Move</td><td>A / D</td><td>← / →</td></tr>
-            <tr><td>Jump / climb corner</td><td>W</td><td>↑</td></tr>
-            <tr><td>Block</td><td>S</td><td>↓</td></tr>
-            <tr><td>Run (hold)</td><td>Left Shift</td><td>Right Ctrl or Right Shift</td></tr>
-            <tr><td>Punch</td><td>F</td><td>J</td></tr>
-            <tr><td>Kick</td><td>G</td><td>K</td></tr>
-            <tr><td>Grapple (+ direction to whip)</td><td>H</td><td>L</td></tr>
-            <tr><td>Signature / finisher</td><td>R</td><td>I</td></tr>
-            <tr><td>Pin a downed opponent</td><td>E</td><td>U</td></tr>
-            <tr><td>Pause</td><td>Esc</td><td>Esc</td></tr>
+            <tr><td>Move</td><td>← → (or A D)</td><td>A / D</td><td>← / →</td></tr>
+            <tr><td>Run</td><td colspan="3">Tap a direction twice and hold it</td></tr>
+            <tr><td>Jump / climb a corner</td><td>↑</td><td>W</td><td>↑</td></tr>
+            <tr><td>Block</td><td>↓ (hold)</td><td>S</td><td>↓</td></tr>
+            <tr><td>Attack</td><td>J, Z or Space</td><td>F</td><td>J</td></tr>
+            <tr><td>Grab</td><td>K or X</td><td>G</td><td>K</td></tr>
+            <tr><td>Special</td><td>L or C</td><td>H</td><td>L</td></tr>
+            <tr><td>Pause</td><td colspan="3">Esc</td></tr>
           </tbody>
         </table>
       </div>
       <ul>
-        <li>Three punches in a row make a combo; the third hits 50% harder.</li>
-        <li>Blocking stops strikes but not grapples. Press grapple just before a grab lands to reverse it.</li>
-        <li>Punch while running for a running strike. Punch a downed opponent to stomp.</li>
-        <li>Press up in a corner to climb the turnbuckle, then kick to dive.</li>
-        <li>When pinned, mash your grapple button to kick out. Below 25% HP it gets harder.</li>
-        <li>Under 30% HP your special meter fills 50% faster.</li>
+        <li><b>Attack</b> punches up close and kicks from a step away. Tap it 3 times fast for a combo. While running it's a running strike; on a downed opponent it's a stomp.</li>
+        <li><b>Grab</b> throws a standing opponent and pins a downed one. Press it just before they grab you to reverse their throw.</li>
+        <li><b>Special</b> does your signature move at 50 meter and your finisher at 100. Hits fill the meter.</li>
+        <li>Press ↑ in a corner to climb, then Attack to dive.</li>
+        <li>When pinned, mash any button to kick out. Below 25% HP it gets harder.</li>
       </ul>
     </div>
     <button class="btn" data-back="title" type="button">Back</button>
@@ -133,15 +130,12 @@
       <button type="button" data-a="left" aria-label="Left">◀</button>
       <button type="button" data-a="up" aria-label="Jump">▲</button>
       <button type="button" data-a="right" aria-label="Right">▶</button>
-      <button type="button" data-a="down" aria-label="Block">BLK</button>
-      <button type="button" data-a="run" aria-label="Run">RUN</button>
+      <button type="button" data-a="down" aria-label="Block">BLOCK</button>
     </div>
     <div class="pad">
-      <button type="button" data-a="punch">PUN</button>
-      <button type="button" data-a="kick">KCK</button>
-      <button type="button" data-a="grapple">GRB</button>
+      <button type="button" data-a="attack">HIT</button>
+      <button type="button" data-a="grab">GRAB</button>
       <button type="button" data-a="special">SPL</button>
-      <button type="button" data-a="pin">PIN</button>
     </div>
   </div>
   <button id="btn-pause" class="corner-btn" type="button" hidden aria-label="Pause">II</button>

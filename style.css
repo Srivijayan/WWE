@@ -197,3 +197,7 @@ input[type="range"] { width: 100%; accent-color: var(--gold); }
   .btn { transition: none; }
   .btn:hover, .btn:focus-visible { transform: none; }
 }
+
+/* the three action buttons are the ones thumbs hit most: make them bigger */
+#touch .pad:last-child { grid-template-columns: repeat(3, 66px); }
+#touch .pad:last-child button { width: 66px; height: 66px; font-size: 12px; }

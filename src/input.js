@@ -1,17 +1,27 @@
 // Keyboard, gamepad and touch controls, turned into one "intent" per player per frame.
+// Simple controls: move, block, and three buttons (Attack, Grab, Special). The match
+// decides punch or kick, stomp or pin, from where the opponent is.
 (function () {
-  const BIND = [
-    { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], run: ['ShiftLeft'], punch: ['KeyF'], kick: ['KeyG'], grapple: ['KeyH'], special: ['KeyR'], pin: ['KeyE'] },
-    { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], run: ['ControlRight', 'ShiftRight'], punch: ['KeyJ'], kick: ['KeyK'], grapple: ['KeyL'], special: ['KeyI'], pin: ['KeyU'] },
+  const BIND_2P = [
+    { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], run: ['ShiftLeft'], attack: ['KeyF'], grab: ['KeyG'], special: ['KeyH'] },
+    { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], run: ['ShiftRight'], attack: ['KeyJ', 'Numpad1'], grab: ['KeyK', 'Numpad2'], special: ['KeyL', 'Numpad3'] },
   ];
-  // Standard gamepad layout: X punch, Y kick, B grapple, A pin, RB special, LB block, RT run.
-  const PAD = { punch: 2, kick: 3, grapple: 1, pin: 0, special: 5, down: 4, run: 7, up: 12, left: 14, right: 15 };
-  const ACTIONS = Object.keys(BIND[0]);
-  const EDGE = ['punch', 'kick', 'grapple', 'special', 'pin', 'up'];
+  // 1 player: either hand position works.
+  const BIND_1P = {
+    left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], up: ['ArrowUp', 'KeyW'], down: ['ArrowDown', 'KeyS'], run: ['ShiftLeft', 'ShiftRight'],
+    attack: ['KeyJ', 'KeyZ', 'KeyF', 'Space'], grab: ['KeyK', 'KeyX', 'KeyG'], special: ['KeyL', 'KeyC', 'KeyH'],
+  };
+  // Standard gamepad layout: A or X attack, B grab, Y or RB special, LB block, RT run.
+  const PAD = { attack: [0, 2], grab: [1], special: [3, 5], down: [4], run: [7], up: [12], left: [14], right: [15] };
+  const ACTIONS = Object.keys(BIND_1P);
+  const BUTTONS = ['attack', 'grab', 'special'];
+  const DOUBLE_TAP = 16; // frames between taps of a direction to start running
 
   const held = new Set(), tapped = new Set(), touch = new Set(), touchTapped = new Set();
   const cur = [{}, {}], prev = [{}, {}];
+  const lastTap = [{ left: -99, right: -99 }, { left: -99, right: -99 }], runDir = [null, null];
   const listeners = [];
+  let mode = '1p', frame = 0;
 
   window.addEventListener('keydown', e => {
     const inField = e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT');
@@ -26,22 +36,32 @@
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const gp = pads && pads[p];
     if (!gp) return false;
-    const b = gp.buttons[PAD[action]];
-    if (b && (b.pressed || b.value > 0.5)) return true;
+    if (PAD[action].some(i => gp.buttons[i] && (gp.buttons[i].pressed || gp.buttons[i].value > 0.5))) return true;
     const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
     if (action === 'left') return ax < -0.5;
     if (action === 'right') return ax > 0.5;
     if (action === 'up') return ay < -0.7;
+    if (action === 'down') return ay > 0.7;
     return false;
   }
 
+  function bindFor(p) { return mode === '1p' ? (p === 0 ? BIND_1P : null) : BIND_2P[p]; }
+
   RR.Input = {
-    BIND,
+    setMode(m) { mode = m; },
     poll() {
+      frame++;
       for (let p = 0; p < 2; p++) {
+        const bind = bindFor(p), c = cur[p], o = prev[p];
         for (const a of ACTIONS) {
-          cur[p][a] = BIND[p][a].some(c => held.has(c) || tapped.has(c)) || padState(p, a) || (p === 0 && (touch.has(a) || touchTapped.has(a)));
+          c[a] = (!!bind && bind[a].some(k => held.has(k) || tapped.has(k))) || padState(p, a) || (p === 0 && (touch.has(a) || touchTapped.has(a)));
         }
+        // double-tap a direction and keep holding it to run
+        for (const d of ['left', 'right']) {
+          if (c[d] && !o[d]) { if (frame - lastTap[p][d] <= DOUBLE_TAP) runDir[p] = d; lastTap[p][d] = frame; }
+        }
+        if (runDir[p] && !c[runDir[p]]) runDir[p] = null;
+        c.run = c.run || !!runDir[p];
       }
     },
     endFrame() {
@@ -49,17 +69,17 @@
       tapped.clear(); touchTapped.clear();
     },
     intent(p) {
-      const c = cur[p], o = prev[p], it = {};
-      for (const a of ACTIONS) it[a] = !!c[a];
-      for (const a of EDGE) it[a + 'Pressed'] = !!c[a] && !o[a];
-      // attacks act on the press, not while held
-      it.punch = it.punchPressed; it.kick = it.kickPressed; it.grapple = it.grapplePressed;
-      it.special = it.specialPressed; it.pin = it.pinPressed;
-      return it;
+      const c = cur[p], o = prev[p];
+      return {
+        simple: true,
+        left: !!c.left, right: !!c.right, up: !!c.up, down: !!c.down, run: !!c.run,
+        upPressed: !!c.up && !o.up,
+        attack: !!c.attack && !o.attack, grab: !!c.grab && !o.grab, special: !!c.special && !o.special,
+      };
     },
     anyPressed(p) {
       const c = cur[p], o = prev[p];
-      return ['punch', 'kick', 'grapple', 'special', 'pin'].some(a => c[a] && !o[a]);
+      return BUTTONS.some(a => c[a] && !o[a]);
     },
     onKey(fn) { listeners.push(fn); },
     touchDown(a) { touch.add(a); touchTapped.add(a); },

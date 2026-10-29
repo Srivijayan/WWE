@@ -167,7 +167,7 @@
       const one = this.mode === '1p';
       $('select-title').textContent = one ? (this.confirmed[0] ? 'Choose your opponent' : 'Choose your wrestler') : 'Choose your wrestlers';
       $('select-hint').textContent = one
-        ? 'Arrows or W A S D to move · F or Enter to pick · G to change outfit · Esc to go back'
+        ? 'Arrows to move · Enter or J to pick · K to change outfit · Esc to go back'
         : 'P1: W A S D, F to pick, G for outfit · P2: arrows, J to pick, K for outfit · Esc to go back';
       document.querySelectorAll('#roster .card').forEach((card, i) => {
         card.classList.toggle('p1', this.cursor[0] === i);
@@ -269,6 +269,7 @@
       clearTimeout(this.previewTimer);
       RR.Audio.stopTheme(0.2);
       const sel = [0, 1].map(p => { const def = RR.ROSTER[this.cursor[p]]; return { def, outfit: def.outfits[this.outfit[p]] }; });
+      RR.Input.setMode(this.mode);
       this.match = new RR.Match(sel, { mode: this.mode, difficulty: this.difficulty, onEnd: m => this.showResults(m) });
       this.entrance = new Entrance(this.match);
       MENUS.forEach(s => { $('screen-' + s).hidden = true; });
@@ -336,8 +337,8 @@
       const map2 = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
       if (map1[k]) return this.moveCursor(p1, ...map1[k]);
       if (map2[k]) return this.moveCursor(one ? act : 1, ...map2[k]);
-      if (k === 'KeyF' || (one && (k === 'Enter' || k === 'KeyJ'))) { e.preventDefault(); return this.confirm(p1); }
-      if (k === 'KeyG' || (one && k === 'KeyK')) return this.cycleOutfit(p1);
+      if (k === 'KeyF' || (one && ['Enter', 'Space', 'KeyJ', 'KeyZ'].includes(k))) { e.preventDefault(); return this.confirm(p1); }
+      if (k === 'KeyG' || (one && ['KeyK', 'KeyX'].includes(k))) return this.cycleOutfit(p1);
       if (!one && k === 'KeyJ') return this.confirm(1);
       if (!one && k === 'KeyK') return this.cycleOutfit(1);
     },
@@ -368,15 +369,29 @@
         RR.renderWorld(ctx, { frame: this.frame, match: m, excite: m.excite, tron, fighters, dark: e ? e.dark : 0, spot: cur ? { x: cur.x, y: RING.FLOOR - 70 } : null });
         if (e && e.t > 40 && e.t < 460) drawCard(ctx, cur, e.t);
         if (!e) RR.drawHUD(ctx, m, this.labels());
+        if (!e && !isTouch && m.started && m.frame - m.beganAt < 600) drawKeyHint(ctx, this.mode, m.frame - m.beganAt);
         if (e) {
           ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = "600 15px 'Barlow Condensed', sans-serif"; ctx.textAlign = 'right';
-          ctx.fillText('Press any attack button, Enter or tap to skip', RR.W - 20, RR.H - 16);
+          ctx.fillText('Press any button or tap to skip', RR.W - 20, RR.H - 16);
         }
       } else {
         RR.renderWorld(ctx, { frame: this.frame, excite: 0.35, tron: null, fighters: [] });
       }
     },
   };
+
+  // control reminder for the first 10 seconds of a match
+  function drawKeyHint(ctx, mode, t) {
+    const text = mode === '1p'
+      ? '← → move  ·  ↑ jump  ·  ↓ block  ·  J attack  ·  K grab  ·  L special  ·  tap twice to run'
+      : 'P1: A D move · F attack · G grab · H special     P2: ← → move · J attack · K grab · L special';
+    ctx.save(); ctx.globalAlpha = Math.min(1, (600 - t) / 40);
+    ctx.font = "600 17px 'Barlow Condensed', sans-serif"; ctx.textAlign = 'center';
+    const w = ctx.measureText(text).width + 32;
+    ctx.fillStyle = 'rgba(11,13,28,0.85)'; ctx.fillRect(RR.W / 2 - w / 2, RR.H - 44, w, 30);
+    ctx.fillStyle = '#ffffff'; ctx.fillText(text, RR.W / 2, RR.H - 23);
+    ctx.restore();
+  }
 
   // announcer card during an entrance
   function drawCard(ctx, f, t) {
