@@ -1586,6 +1586,8 @@
                 this.grappleOffsetY = 0;
                 this.bodyRotation = 0; // Full body rotation in radians for aerials/suplexes/knockdowns
                 this.matBounceVel = 0;
+                this.invulnTimer = 0; // Post-recovery invulnerability to prevent infinite stun-locks
+                this.beingGrappledSafetyTimer = 0;
             }
 
             get speedMultiplier() {
@@ -1596,9 +1598,24 @@
             }
 
             startAction(newState, duration, staminaCost = 0, variant = 'standard') {
-                if (this.state === 'being_grappled') return false;
+                if (this.state === 'being_grappled' && newState !== 'knockdown' && newState !== 'idle') return false;
                 if (this.stamina < staminaCost) return false;
                 this.stamina = Math.max(0, this.stamina - staminaCost);
+
+                // If interrupted out of a grapple/finisher throw, immediately release the locked victim
+                if (this.lockedTarget && newState !== 'grapple_seq' && newState !== 'finisher_seq') {
+                    const released = this.lockedTarget;
+                    this.lockedTarget = null;
+                    if (released.state === 'being_grappled') {
+                        released.state = 'idle';
+                        released.stateDuration = 0;
+                        released.stateTimer = 0;
+                        released.bodyRotation = 0;
+                        released.y = RING_FLOOR_Y;
+                        released.vy = 0;
+                    }
+                }
+
                 this.state = newState;
                 this.stateTimer = 0;
                 this.stateDuration = duration;
@@ -1609,16 +1626,16 @@
                 if (newState === 'light') {
                     this.comboStep = (this.comboStep + 1) % 3;
                     // Lunge forward slightly on strikes for realistic weight transfer
-                    this.vx = this.facing * (this.comboStep === 2 ? 240 : 125);
+                    this.vx = this.facing * (this.comboStep === 2 ? 220 : 115);
                 } else if (newState === 'heavy') {
                     // Airborne Dropkick if jumping or sprinting, otherwise Discus Lariat / Big Boot
                     if (this.y < RING_FLOOR_Y - 10 || Math.abs(this.vx) > 280) {
                         this.moveVariant = 'dropkick';
-                        this.vy = -380;
-                        this.vx = this.facing * 420;
+                        this.vy = -360;
+                        this.vx = this.facing * 380;
                     } else {
                         this.moveVariant = 'lariat';
-                        this.vx = this.facing * 260;
+                        this.vx = this.facing * 230;
                     }
                 }
                 return true;
@@ -1626,6 +1643,7 @@
 
             update(dt, opponent) {
                 this.animPhase += dt * 6;
+                if (this.invulnTimer > 0) this.invulnTimer = Math.max(0, this.invulnTimer - dt);
 
                 // Smooth health trail interpolation
                 if (this.damageTrail > this.health) {
@@ -1642,15 +1660,31 @@
                     }
                 }
 
-                // If locked inside a multi-phase grapple/finisher throw, attacker drives position
+                // If locked inside a multi-phase grapple/finisher throw, verify attacker is still executing it
                 if (this.state === 'being_grappled') {
-                    this.expression = 'pain';
-                    return;
+                    this.beingGrappledSafetyTimer += dt;
+                    const attackerActive = opponent && (opponent.state === 'grapple_seq' || opponent.state === 'finisher_seq') && opponent.lockedTarget === this;
+                    if (!attackerActive || this.beingGrappledSafetyTimer > 1.6) {
+                        // Safety release if grapple was interrupted or timed out
+                        this.state = 'idle';
+                        this.stateDuration = 0;
+                        this.stateTimer = 0;
+                        this.bodyRotation = 0;
+                        this.beingGrappledSafetyTimer = 0;
+                        this.y = RING_FLOOR_Y;
+                        this.vy = 0;
+                        this.invulnTimer = 0.45;
+                    } else {
+                        this.expression = 'pain';
+                        return;
+                    }
+                } else {
+                    this.beingGrappledSafetyTimer = 0;
                 }
 
                 // Stamina natural recovery
                 if (['idle', 'walk', 'block'].includes(this.state)) {
-                    const regenRate = 16 * (this.star.stats.stamina / 90);
+                    const regenRate = 18 * (this.star.stats.stamina / 90);
                     this.stamina = Math.min(100, this.stamina + regenRate * dt);
                 }
 
@@ -1666,11 +1700,23 @@
                         if (this.state === 'knockdown') {
                             this.state = 'idle';
                             this.stateDuration = 0;
+                            this.stateTimer = 0;
                             this.bodyRotation = 0;
+                            this.y = RING_FLOOR_Y;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.invulnTimer = 0.65; // Brief wake-up protection so player can act immediately
                             this.expression = 'determined';
                         } else if (this.state !== 'pinning') {
+                            if (this.lockedTarget && this.lockedTarget.state === 'being_grappled') {
+                                this.completeLockedSlam(this.lockedTarget);
+                            }
+                            if (this.state === 'hitstun') {
+                                this.invulnTimer = 0.22; // Brief recovery window after hitstun
+                            }
                             this.state = 'idle';
                             this.stateDuration = 0;
+                            this.stateTimer = 0;
                             this.bodyRotation = 0;
                             this.lockedTarget = null;
                             this.expression = 'determined';
@@ -1691,8 +1737,8 @@
                     if (this.y >= RING_FLOOR_Y) {
                         this.y = RING_FLOOR_Y;
                         // Realistic canvas mat bounce when slammed hard!
-                        if (this.vy > 420 && this.state === 'knockdown') {
-                            this.vy = -this.vy * 0.34;
+                        if (this.vy > 480 && this.state === 'knockdown') {
+                            this.vy = -this.vy * 0.28;
                             triggerCameraShake(10);
                             spawnParticles(this.x, RING_FLOOR_Y, '#cbd5e1', 14);
                         } else {
@@ -1700,6 +1746,7 @@
                             if (this.state === 'jump') {
                                 this.state = 'idle';
                                 this.stateDuration = 0;
+                                this.stateTimer = 0;
                             }
                         }
                     }
@@ -1708,9 +1755,11 @@
                 // Elastic Ring Rope Rebound Physics
                 if (this.x <= RING_LEFT_X) {
                     this.x = RING_LEFT_X;
-                    if (this.state === 'run' || Math.abs(this.vx) > 260) {
+                    // Only trigger elastic rope rebound when intentionally sprinting!
+                    // Knockback from punches/kicks should NOT trap the fighter in an uncontrollable run state.
+                    if (this.state === 'run') {
                         ropePhysics.leftVel = -680;
-                        this.vx = 580 * this.speedMultiplier;
+                        this.vx = 540 * this.speedMultiplier;
                         this.facing = 1;
                         this.state = 'run';
                         spawnParticles(RING_LEFT_X - 15, this.y - 95, '#f59e0b', 10);
@@ -1721,9 +1770,9 @@
                     }
                 } else if (this.x >= RING_RIGHT_X) {
                     this.x = RING_RIGHT_X;
-                    if (this.state === 'run' || Math.abs(this.vx) > 260) {
+                    if (this.state === 'run') {
                         ropePhysics.rightVel = 680;
-                        this.vx = -580 * this.speedMultiplier;
+                        this.vx = -540 * this.speedMultiplier;
                         this.facing = -1;
                         this.state = 'run';
                         spawnParticles(RING_RIGHT_X + 15, this.y - 95, '#f59e0b', 10);
@@ -1843,12 +1892,14 @@
                 const dmg = isFin ? 285 * this.powerMultiplier : 142 * (this.star.stats.grapple / 90);
                 const moveLabel = isFin ? `${this.star.finisherName.toUpperCase()}!!` : 'GERMAN SUPLEX SLAM!';
 
+                victim.state = 'idle'; // Clear being_grappled before applying knockdown
+                victim.beingGrappledSafetyTimer = 0;
                 victim.health = Math.max(0, victim.health - dmg);
                 victim.y = RING_FLOOR_Y - 12;
                 victim.vy = 520; // Triggers realistic mat bounce in update()
-                victim.vx = (victim.x >= this.x ? 1 : -1) * 180;
+                victim.vx = (victim.x >= this.x ? 1 : -1) * 160;
                 victim.bodyRotation = 0;
-                victim.startAction('knockdown', isFin ? 2.8 : 1.6);
+                victim.startAction('knockdown', isFin ? 2.1 : 1.15);
 
                 this.comboCount++;
                 this.comboResetTimer = 2.8;
@@ -1858,10 +1909,10 @@
                 } else {
                     this.momentum = Math.min(100, this.momentum + 32);
                 }
-                victim.momentum = Math.min(100, victim.momentum + 10);
+                victim.momentum = Math.min(100, victim.momentum + 12);
 
                 sfx.playSlam();
-                hitStopTimer = isFin ? 0.16 : 0.09;
+                hitStopTimer = isFin ? 0.14 : 0.08;
                 triggerCameraShake(isFin ? 26 : 16);
                 spawnParticles(victim.x, RING_FLOOR_Y - 15, isFin ? '#f59e0b' : '#f8fafc', isFin ? 34 : 20);
                 spawnFloatingText(victim.x, victim.y - 140, `${moveLabel} -${Math.round(dmg)}`, isFin ? '#fbbf24' : '#c084fc');
@@ -1876,6 +1927,11 @@
             evaluateCombatHitbox(opponent) {
                 if (this.hitRegistered) return;
                 if (!['light', 'heavy', 'grapple', 'finisher'].includes(this.state)) return;
+
+                // Prevent hitting an opponent who is already knocked down, in a grapple, or in post-wakeup protection
+                if (opponent.invulnTimer > 0 || ['knockdown', 'being_grappled', 'grapple_seq', 'finisher_seq', 'pinning'].includes(opponent.state)) {
+                    return;
+                }
 
                 const progress = this.stateTimer / this.stateDuration;
                 if (progress < 0.25 || progress > 0.78) return;
@@ -1901,6 +1957,7 @@
                         this.hitRegistered = false; // Will trigger on canvas impact at end of sequence
                         this.lockedTarget = opponent;
                         opponent.state = 'being_grappled';
+                        opponent.beingGrappledSafetyTimer = 0;
                         opponent.vx = 0;
                         opponent.vy = 0;
                         sfx.playStrike(true);
@@ -1924,7 +1981,7 @@
 
                     if (isBlocked) {
                         dmg *= 0.20;
-                        opponent.vx = this.facing * 170;
+                        opponent.vx = this.facing * 140;
                         spawnParticles((this.x + opponent.x) / 2, this.y - 115, '#38bdf8', 8);
                         spawnFloatingText(opponent.x, opponent.y - 155, 'BLOCKED', '#94a3b8');
                     } else {
@@ -1934,27 +1991,28 @@
                         updateComboHUD();
 
                         this.momentum = Math.min(100, this.momentum + (this.state === 'heavy' ? 20 : 12));
-                        opponent.momentum = Math.min(100, opponent.momentum + 6);
+                        opponent.momentum = Math.min(100, opponent.momentum + 8);
 
                         const impactX = (this.x + opponent.x) * 0.5;
                         const impactY = this.y - 125;
                         spawnParticles(impactX, impactY, '#f8fafc', 15);
                         spawnFloatingText(opponent.x, opponent.y - 175, `${moveLabel} -${Math.round(dmg)}`, '#f43f5e');
 
-                        if (this.state === 'heavy' || this.comboStep === 0) {
-                            hitStopTimer = 0.06;
-                            triggerCameraShake(11);
-                            opponent.startAction('knockdown', 1.25);
-                            opponent.vx = this.facing * 280;
-                            opponent.vy = -310;
+                        // Heavy strikes or 3rd combo hit cause a brief knockdown; jabs/hooks cause quick hitstun
+                        if (this.state === 'heavy' || (this.state === 'light' && this.comboStep === 0)) {
+                            hitStopTimer = 0.05;
+                            triggerCameraShake(10);
+                            opponent.startAction('knockdown', 0.85);
+                            opponent.vx = this.facing * 210;
+                            opponent.vy = -240;
                             opponent.expression = 'pain';
                             showActionBanner(moveLabel);
-                            setCommentary(` thunderous ${moveLabel} by ${this.star.name}!`);
+                            setCommentary(`Thunderous ${moveLabel} by ${this.star.name}!`);
                         } else {
-                            hitStopTimer = 0.03;
+                            hitStopTimer = 0.025;
                             triggerCameraShake(4);
-                            opponent.startAction('hitstun', 0.38);
-                            opponent.vx = this.facing * 115;
+                            opponent.startAction('hitstun', 0.24);
+                            opponent.vx = this.facing * 95;
                             opponent.expression = 'pain';
                         }
                     }
@@ -2475,21 +2533,37 @@
                 return;
             }
 
-            if (this && netMultiplayer.mode === 'client' && fighter === p2Fighter) {
+            if (netMultiplayer.mode === 'client' && fighter === p2Fighter) {
                 netMultiplayer.sendPacket({ type: 'client_input', action: cmd });
             }
 
-            if (['idle', 'walk', 'run', 'jump'].includes(fighter.state)) {
-                if (cmd === 'light') fighter.startAction('light', 0.34, 7);
-                else if (cmd === 'heavy') fighter.startAction('heavy', 0.54, 15);
-                else if (cmd === 'grapple') fighter.startAction('grapple', 0.55, 20);
+            // Allow instant Dodge/Reversal recovery out of minor hitstun, or kip-up faster when knocked down
+            if (fighter.state === 'knockdown' && fighter.health > 0) {
+                fighter.stateTimer += 0.18; // Mash buttons to get up faster!
+                spawnParticles(fighter.x, fighter.y - 20, '#38bdf8', 3);
+                return;
+            }
+
+            if (fighter.state === 'hitstun' && cmd === 'dodge' && fighter.stamina >= 12) {
+                fighter.invulnTimer = 0.35;
+                fighter.startAction('dodge', 0.35, 12);
+                fighter.vx = -fighter.facing * 360;
+                spawnFloatingText(fighter.x, fighter.y - 155, 'REVERSAL ESCAPE!', '#38bdf8');
+                return;
+            }
+
+            if (['idle', 'walk', 'run', 'jump', 'block'].includes(fighter.state)) {
+                if (cmd === 'light') fighter.startAction('light', 0.32, 6);
+                else if (cmd === 'heavy') fighter.startAction('heavy', 0.48, 14);
+                else if (cmd === 'grapple') fighter.startAction('grapple', 0.50, 18);
                 else if (cmd === 'dodge') {
-                    fighter.startAction('dodge', 0.38, 12);
-                    fighter.vx = fighter.facing * 430;
+                    fighter.invulnTimer = 0.35;
+                    fighter.startAction('dodge', 0.35, 10);
+                    fighter.vx = fighter.facing * 410;
                 } else if (cmd === 'pin') {
                     tryInitiatePinfall(fighter, opponent);
                 } else if (cmd === 'finisher' && fighter.momentum >= 100) {
-                    fighter.startAction('finisher', 0.65, 0);
+                    fighter.startAction('finisher', 0.60, 0);
                 }
             }
         }
