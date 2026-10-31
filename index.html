@@ -1,160 +1,2557 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ring Rivals</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700&display=swap">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WWE Main Event Ultra - Championship Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wwe-red: #e11d48;
+            --wwe-gold: #f59e0b;
+            --wwe-blue: #2563eb;
+        }
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #090a0f;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .font-broadcast {
+            font-family: 'Teko', sans-serif;
+            letter-spacing: 0.04em;
+        }
+        /* Broadcast metallic gradients & slants */
+        .skew-broadcast {
+            transform: skewX(-12deg);
+        }
+        .unskew-broadcast {
+            transform: skewX(12deg);
+        }
+        .gold-border-glow {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.45), inset 0 0 12px rgba(245, 158, 11, 0.25);
+        }
+        .red-border-glow {
+            box-shadow: 0 0 20px rgba(225, 29, 72, 0.5), inset 0 0 12px rgba(225, 29, 72, 0.25);
+        }
+        .blue-border-glow {
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5), inset 0 0 12px rgba(37, 99, 235, 0.25);
+        }
+        .finisher-pulse {
+            animation: pulseFinisher 0.9s infinite alternate ease-in-out;
+        }
+        @keyframes pulseFinisher {
+            0% { transform: scale(1) skewX(-12deg); box-shadow: 0 0 10px #f59e0b; }
+            100% { transform: scale(1.06) skewX(-12deg); box-shadow: 0 0 28px #ef4444, 0 0 12px #fde047; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.5);
+            border-radius: 9999px;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
-<body>
-<div id="app">
-  <div id="stage">
-    <canvas id="game" width="960" height="540" aria-label="Ring Rivals arena"></canvas>
-  </div>
+<body class="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950 select-none">
 
-  <section id="screen-title" class="screen">
-    <h1 class="logo">Ring Rivals<span>Wrestling</span></h1>
-    <p class="tagline">10 wrestlers. 10 entrance themes. One ring.</p>
-    <div class="menu">
-      <button class="btn primary" id="btn-play" type="button">Play</button>
-      <button class="btn" id="btn-howto" type="button">How to play</button>
-      <button class="btn" id="btn-sound" type="button">Sound</button>
-    </div>
-    <p class="record" id="record"></p>
-  </section>
-
-  <section id="screen-howto" class="screen" hidden>
-    <h2 class="heading">How to play</h2>
-    <div class="panel howto">
-      <p>Win by knockout (HP to 0) or a 3-count pin on an opponent under 25% HP. Landing and taking hits fills your special meter: 50 unlocks your signature move, 100 unlocks your finisher.</p>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Action</th><th>Player 1</th><th>Player 2</th></tr></thead>
-          <tbody>
-            <tr><td>Move</td><td>A / D</td><td>← / →</td></tr>
-            <tr><td>Jump / climb corner</td><td>W</td><td>↑</td></tr>
-            <tr><td>Block</td><td>S</td><td>↓</td></tr>
-            <tr><td>Run (hold)</td><td>Left Shift</td><td>Right Ctrl or Right Shift</td></tr>
-            <tr><td>Punch</td><td>F</td><td>J</td></tr>
-            <tr><td>Kick</td><td>G</td><td>K</td></tr>
-            <tr><td>Grapple (+ direction to whip)</td><td>H</td><td>L</td></tr>
-            <tr><td>Signature / finisher</td><td>R</td><td>I</td></tr>
-            <tr><td>Pin a downed opponent</td><td>E</td><td>U</td></tr>
-            <tr><td>Pause</td><td>Esc</td><td>Esc</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <ul>
-        <li>Three punches in a row make a combo; the third hits 50% harder.</li>
-        <li>Blocking stops strikes but not grapples. Press grapple just before a grab lands to reverse it.</li>
-        <li>Punch while running for a running strike. Punch a downed opponent to stomp.</li>
-        <li>Press up in a corner to climb the turnbuckle, then kick to dive.</li>
-        <li>When pinned, mash your grapple button to kick out. Below 25% HP it gets harder.</li>
-        <li>Under 30% HP your special meter fills 50% faster.</li>
-      </ul>
-    </div>
-    <button class="btn" data-back="title" type="button">Back</button>
-  </section>
-
-  <section id="screen-sound" class="screen" hidden>
-    <h2 class="heading">Sound</h2>
-    <div class="panel sound">
-      <label for="vol-music">Music <input id="vol-music" type="range" min="0" max="1" step="0.05"></label>
-      <label for="vol-sfx">Effects and crowd <input id="vol-sfx" type="range" min="0" max="1" step="0.05"></label>
-      <button class="btn small" id="btn-mute" type="button">Mute</button>
-    </div>
-    <button class="btn" data-back="title" type="button">Back</button>
-  </section>
-
-  <section id="screen-mode" class="screen" hidden>
-    <h2 class="heading">Choose a mode</h2>
-    <div class="modes">
-      <div class="panel mode">
-        <h3>1 Player vs CPU</h3>
-        <p>Pick a difficulty.</p>
-        <div class="menu row">
-          <button class="btn" data-diff="easy" type="button">Easy</button>
-          <button class="btn primary" data-diff="normal" type="button">Normal</button>
-          <button class="btn" data-diff="hard" type="button">Hard</button>
+    <!-- TOP BROADCAST HEADER -->
+    <header class="h-12 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-zinc-800/80 px-4 flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-br from-rose-600 to-red-800 px-2.5 py-0.5 rounded font-broadcast text-2xl font-bold tracking-wider shadow-md border border-rose-400/30">
+                WWE
+            </div>
+            <span class="font-broadcast text-2xl tracking-widest text-zinc-100 uppercase">
+                UNDISPUTED <span class="text-amber-400">ULTRA</span>
+            </span>
+            <span id="headerMatchBadge" class="hidden sm:inline-block text-xs bg-zinc-800/90 border border-zinc-700 text-zinc-300 px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                60FPS IK Physics Engine
+            </span>
         </div>
-      </div>
-      <div class="panel mode">
-        <h3>2 Players</h3>
-        <p>One keyboard, or two gamepads.</p>
-        <button class="btn" id="btn-2p" type="button">Start</button>
-      </div>
-    </div>
-    <button class="btn" data-back="title" type="button">Back</button>
-  </section>
 
-  <section id="screen-select" class="screen" hidden>
-    <h2 class="heading" id="select-title">Choose your wrestler</h2>
-    <div class="select-wrap">
-      <div class="pp p1" id="pp-0"></div>
-      <div class="roster" id="roster"></div>
-      <div class="pp p2" id="pp-1"></div>
-    </div>
-    <p class="hint" id="select-hint"></p>
-    <div class="menu row">
-      <button class="btn" data-back="mode" type="button">Back</button>
-    </div>
-  </section>
+        <div class="flex items-center gap-2.5">
+            <button id="btnToggleSound" class="px-3 py-1 rounded bg-zinc-800/80 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 border border-zinc-700 flex items-center gap-1.5 transition">
+                <span id="soundIcon">🔊</span> <span class="hidden sm:inline">SFX: ON</span>
+            </button>
+            <button id="btnShowControlsModal" class="px-3 py-1 rounded bg-zinc-800/80 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 border border-zinc-700 transition">
+                🎮 Controls
+            </button>
+            <button id="btnBackToRoster" class="hidden px-3 py-1 rounded bg-rose-700 hover:bg-rose-600 text-xs font-bold text-white border border-rose-500 transition shadow">
+                ⇄ Change Superstars
+            </button>
+        </div>
+    </header>
 
-  <section id="screen-pause" class="screen" hidden>
-    <h2 class="heading">Paused</h2>
-    <div class="panel sound">
-      <label for="pause-music">Music <input id="pause-music" type="range" min="0" max="1" step="0.05"></label>
-      <label for="pause-sfx">Effects and crowd <input id="pause-sfx" type="range" min="0" max="1" step="0.05"></label>
-    </div>
-    <div class="menu">
-      <button class="btn primary" id="btn-resume" type="button">Resume</button>
-      <button class="btn" id="btn-quit" type="button">Quit to title</button>
-    </div>
-  </section>
+    <!-- ==========================================
+         SCREEN 1: CHARACTER SELECTION LOCKER ROOM
+         ========================================== -->
+    <main id="selectionScreen" class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-zinc-950 to-black p-3 sm:p-5 gap-4 z-20">
+        
+        <!-- LEFT COLUMN: PLAYER 1 PREVIEW CARD -->
+        <div class="w-full lg:w-1/4 bg-zinc-900/75 border border-rose-500/40 rounded-2xl p-4 flex flex-col justify-between red-border-glow backdrop-blur-md shrink-0">
+            <div>
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
+                    <span class="px-2.5 py-0.5 rounded bg-rose-600 text-white font-broadcast text-xl tracking-wider">PLAYER 1</span>
+                    <span id="p1TitleTag" class="text-xs font-bold uppercase tracking-widest text-rose-400">"The Tribal Chief"</span>
+                </div>
+                
+                <!-- High-Detail Procedural Portrait Canvas P1 -->
+                <div class="relative w-full h-44 sm:h-52 bg-gradient-to-b from-rose-950/50 via-zinc-900 to-zinc-950 rounded-xl border border-zinc-800 overflow-hidden flex items-center justify-center mb-3">
+                    <canvas id="p1PortraitCanvas" width="260" height="240" class="w-48 h-44 object-contain"></canvas>
+                    <div class="absolute bottom-2 left-3 right-3 flex justify-between items-end pointer-events-none">
+                        <div>
+                            <h2 id="p1NameDisplay" class="font-broadcast text-3xl sm:text-4xl font-bold leading-none text-white drop-shadow">ROMAN REIGNS</h2>
+                            <p id="p1WeightDisplay" class="text-[11px] text-zinc-400 font-semibold">6'3" • 265 LBS</p>
+                        </div>
+                        <div class="bg-zinc-950/90 border border-amber-500/50 px-2 py-0.5 rounded text-amber-400 font-broadcast text-2xl leading-none" id="p1OvrDisplay">97 OVR</div>
+                    </div>
+                </div>
 
-  <section id="screen-results" class="screen" hidden>
-    <p class="eyebrow" id="res-method"></p>
-    <h2 class="logo small" id="res-winner"></h2>
-    <div class="panel results">
-      <div class="table-wrap"><table id="res-table"></table></div>
-    </div>
-    <div class="menu row">
-      <button class="btn primary" id="btn-rematch" type="button">Rematch</button>
-      <button class="btn" id="btn-new" type="button">New wrestlers</button>
-      <button class="btn" id="btn-menu" type="button">Main menu</button>
-    </div>
-  </section>
+                <!-- Stat Bars P1 -->
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">STRENGTH / POWER</span><span id="p1StatPowerVal" class="font-bold text-rose-400">96</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p1StatPowerBar" class="h-full bg-gradient-to-r from-rose-600 to-amber-500 rounded-full transition-all duration-300" style="width:96%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">SPEED / AGILITY</span><span id="p1StatSpeedVal" class="font-bold text-rose-400">84</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p1StatSpeedBar" class="h-full bg-gradient-to-r from-rose-600 to-amber-500 rounded-full transition-all duration-300" style="width:84%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">GRAPPLE & SLAM</span><span id="p1StatGrappleVal" class="font-bold text-rose-400">94</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p1StatGrappleBar" class="h-full bg-gradient-to-r from-rose-600 to-amber-500 rounded-full transition-all duration-300" style="width:94%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">STAMINA RECOVERY</span><span id="p1StatStaminaVal" class="font-bold text-rose-400">90</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p1StatStaminaBar" class="h-full bg-gradient-to-r from-rose-600 to-amber-500 rounded-full transition-all duration-300" style="width:90%"></div></div>
+                    </div>
+                </div>
+            </div>
 
-  <div id="touch" hidden>
-    <div class="pad">
-      <button type="button" data-a="left" aria-label="Left">◀</button>
-      <button type="button" data-a="up" aria-label="Jump">▲</button>
-      <button type="button" data-a="right" aria-label="Right">▶</button>
-      <button type="button" data-a="down" aria-label="Block">BLK</button>
-      <button type="button" data-a="run" aria-label="Run">RUN</button>
-    </div>
-    <div class="pad">
-      <button type="button" data-a="punch">PUN</button>
-      <button type="button" data-a="kick">KCK</button>
-      <button type="button" data-a="grapple">GRB</button>
-      <button type="button" data-a="special">SPL</button>
-      <button type="button" data-a="pin">PIN</button>
-    </div>
-  </div>
-  <button id="btn-pause" class="corner-btn" type="button" hidden aria-label="Pause">II</button>
-</div>
+            <div class="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Finisher:</span>
+                <span id="p1FinisherDisplay" class="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded">⚡ Spear & Superman Punch</span>
+            </div>
+        </div>
 
-<script src="src/roster.js"></script>
-<script src="src/audio.js"></script>
-<script src="src/input.js"></script>
-<script src="src/fighter.js"></script>
-<script src="src/combat.js"></script>
-<script src="src/ai.js"></script>
-<script src="src/render.js"></script>
-<script src="src/state.js"></script>
-<script src="src/main.js"></script>
+        <!-- CENTER COLUMN: SUPERSTAR ROSTER GRID & MATCH SETTINGS -->
+        <div class="flex-1 flex flex-col justify-between bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4 backdrop-blur-sm">
+            <div>
+                <!-- Mode & Selector Turn Header -->
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-zinc-800">
+                    <div>
+                        <h1 class="font-broadcast text-3xl sm:text-4xl tracking-wider uppercase text-white leading-none">SELECT YOUR SUPERSTAR</h1>
+                        <p class="text-xs text-zinc-400">Click slot switcher below to choose for Player 1 or Player 2 / CPU</p>
+                    </div>
+
+                    <!-- Active Slot Picker -->
+                    <div class="flex items-center gap-1.5 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                        <button id="btnSelectSlotP1" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white transition">
+                            Selecting: P1
+                        </button>
+                        <button id="btnSelectSlotP2" class="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">
+                            Selecting: P2 / CPU
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6-Superstar Grid -->
+                <div id="rosterGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-2">
+                    <!-- Populated via JS with rich realistic canvas portraits -->
+                </div>
+            </div>
+
+            <!-- Match Configuration & Start Button -->
+            <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+                        <button id="modeP1vsCPU" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-zinc-950 transition">
+                            🥊 P1 vs CPU AI
+                        </button>
+                        <button id="modeP1vsP2" class="px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition">
+                            ⚔️ P1 vs P2 (Local)
+                        </button>
+                    </div>
+
+                    <select id="aiDifficultySelect" class="bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none focus:border-amber-500">
+                        <option value="normal">AI: SmackDown (Normal)</option>
+                        <option value="hard" selected>AI: WrestleMania (Pro)</option>
+                        <option value="legend">AI: Hall of Fame (Legend)</option>
+                    </select>
+                </div>
+
+                <button id="btnStartMatch" class="px-8 py-3 rounded-xl bg-gradient-to-r from-rose-600 via-amber-500 to-rose-600 bg-[length:200%_auto] hover:bg-right text-zinc-950 font-broadcast text-3xl font-bold tracking-wider uppercase shadow-lg shadow-rose-600/30 transition-all transform hover:scale-[1.02] active:scale-95">
+                    🔔 ENTER THE RING — MAIN EVENT
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: PLAYER 2 / CPU PREVIEW CARD -->
+        <div class="w-full lg:w-1/4 bg-zinc-900/75 border border-blue-500/40 rounded-2xl p-4 flex flex-col justify-between blue-border-glow backdrop-blur-md shrink-0">
+            <div>
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2 mb-3">
+                    <span id="p2BadgeLabel" class="px-2.5 py-0.5 rounded bg-blue-600 text-white font-broadcast text-xl tracking-wider">CPU OPPONENT</span>
+                    <span id="p2TitleTag" class="text-xs font-bold uppercase tracking-widest text-blue-400">"The People's Champ"</span>
+                </div>
+                
+                <!-- High-Detail Procedural Portrait Canvas P2 -->
+                <div class="relative w-full h-44 sm:h-52 bg-gradient-to-b from-blue-950/50 via-zinc-900 to-zinc-950 rounded-xl border border-zinc-800 overflow-hidden flex items-center justify-center mb-3">
+                    <canvas id="p2PortraitCanvas" width="260" height="240" class="w-48 h-44 object-contain"></canvas>
+                    <div class="absolute bottom-2 left-3 right-3 flex justify-between items-end pointer-events-none">
+                        <div>
+                            <h2 id="p2NameDisplay" class="font-broadcast text-3xl sm:text-4xl font-bold leading-none text-white drop-shadow">THE ROCK</h2>
+                            <p id="p2WeightDisplay" class="text-[11px] text-zinc-400 font-semibold">6'5" • 260 LBS</p>
+                        </div>
+                        <div class="bg-zinc-950/90 border border-amber-500/50 px-2 py-0.5 rounded text-amber-400 font-broadcast text-2xl leading-none" id="p2OvrDisplay">96 OVR</div>
+                    </div>
+                </div>
+
+                <!-- Stat Bars P2 -->
+                <div class="space-y-2 text-xs">
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">STRENGTH / POWER</span><span id="p2StatPowerVal" class="font-bold text-blue-400">94</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p2StatPowerBar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-300" style="width:94%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">SPEED / AGILITY</span><span id="p2StatSpeedVal" class="font-bold text-blue-400">89</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p2StatSpeedBar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-300" style="width:89%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">GRAPPLE & SLAM</span><span id="p2StatGrappleVal" class="font-bold text-blue-400">95</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p2StatGrappleBar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-300" style="width:95%"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5"><span class="text-zinc-400 font-semibold">STAMINA RECOVERY</span><span id="p2StatStaminaVal" class="font-bold text-blue-400">92</span></div>
+                        <div class="w-full h-2 bg-zinc-800 rounded-full overflow-hidden"><div id="p2StatStaminaBar" class="h-full bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-300" style="width:92%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between">
+                <span class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Finisher:</span>
+                <span id="p2FinisherDisplay" class="text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 rounded">⚡ Rock Bottom & People's Elbow</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         SCREEN 2: ARENA & BROADCAST MATCH VIEW
+         ========================================== -->
+    <section id="arenaScreen" class="hidden flex-1 flex flex-col relative overflow-hidden bg-black">
+        
+        <!-- BROADCAST HUD OVERLAY -->
+        <div class="absolute top-2 left-0 right-0 px-3 sm:px-6 z-20 pointer-events-none">
+            <div class="max-w-6xl mx-auto grid grid-cols-12 items-start gap-2">
+                
+                <!-- PLAYER 1 HUD (Cols 1-5) -->
+                <div class="col-span-5 bg-zinc-950/90 border-l-4 border-rose-600 rounded-r-xl p-2 sm:p-3 shadow-2xl backdrop-blur-md">
+                    <div class="flex items-center gap-2.5">
+                        <canvas id="hudP1Face" width="60" height="60" class="w-11 h-11 sm:w-14 sm:h-14 rounded-lg bg-zinc-900 border border-rose-500/40 shrink-0"></canvas>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <h3 id="hudP1Name" class="font-broadcast text-xl sm:text-2xl font-bold text-white truncate">ROMAN REIGNS</h3>
+                                <span id="hudP1Combo" class="hidden text-xs font-extrabold px-2 py-0.5 rounded bg-rose-600 text-white animate-bounce">3x COMBO</span>
+                            </div>
+                            <!-- Health Bar with Delayed White Damage Trail -->
+                            <div class="w-full h-3.5 sm:h-4 bg-zinc-800 rounded skew-broadcast overflow-hidden relative border border-zinc-700 my-1">
+                                <div id="hudP1DamageTrail" class="absolute top-0 left-0 h-full bg-white transition-all duration-500" style="width: 100%"></div>
+                                <div id="hudP1Health" class="absolute top-0 left-0 h-full bg-gradient-to-r from-rose-600 via-red-500 to-emerald-400 transition-all duration-75" style="width: 100%"></div>
+                            </div>
+                            <!-- Stamina & Finisher Row -->
+                            <div class="grid grid-cols-2 gap-2 items-center mt-1">
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-zinc-400 font-bold"><span>STAMINA</span><span id="hudP1StamText">100%</span></div>
+                                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div id="hudP1Stamina" class="h-full bg-sky-400 transition-all duration-75" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-amber-400 font-bold"><span>MOMENTUM</span><span id="hudP1FinText">0%</span></div>
+                                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div id="hudP1Finisher" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-150" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Finisher Ready Prompt P1 -->
+                    <div id="hudP1FinisherReady" class="hidden mt-1.5 text-center py-0.5 rounded bg-gradient-to-r from-amber-500 to-red-600 text-zinc-950 font-broadcast text-lg font-bold tracking-wider finisher-pulse">
+                        🔥 FINISHER READY! PRESS [SPACE] FOR SIGNATURE!
+                    </div>
+                </div>
+
+                <!-- CENTER MATCH CLOCK & REFEREE CALLOUT (Cols 6-7) -->
+                <div class="col-span-2 flex flex-col items-center">
+                    <div class="bg-zinc-950/90 border border-zinc-700/80 px-3 py-1 rounded-xl text-center shadow-xl backdrop-blur-md">
+                        <div class="text-[10px] uppercase tracking-widest text-amber-400 font-bold">MAIN EVENT</div>
+                        <div id="matchTimerDisplay" class="font-broadcast text-2xl sm:text-3xl leading-none text-white">00:00</div>
+                    </div>
+                    <div id="actionBanner" class="mt-2 hidden px-3 py-1 rounded-lg bg-gradient-to-r from-amber-500 to-rose-600 text-zinc-950 font-broadcast text-xl sm:text-2xl font-bold uppercase tracking-wider shadow-lg whitespace-nowrap">
+                        SPEAR!!
+                    </div>
+                </div>
+
+                <!-- PLAYER 2 HUD (Cols 8-12) -->
+                <div class="col-span-5 bg-zinc-950/90 border-r-4 border-blue-600 rounded-l-xl p-2 sm:p-3 shadow-2xl backdrop-blur-md">
+                    <div class="flex items-center flex-row-reverse gap-2.5">
+                        <canvas id="hudP2Face" width="60" height="60" class="w-11 h-11 sm:w-14 sm:h-14 rounded-lg bg-zinc-900 border border-blue-500/40 shrink-0"></canvas>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-row-reverse justify-between items-baseline">
+                                <h3 id="hudP2Name" class="font-broadcast text-xl sm:text-2xl font-bold text-white truncate">THE ROCK</h3>
+                                <span id="hudP2Combo" class="hidden text-xs font-extrabold px-2 py-0.5 rounded bg-blue-600 text-white animate-bounce">3x COMBO</span>
+                            </div>
+                            <!-- Health Bar P2 -->
+                            <div class="w-full h-3.5 sm:h-4 bg-zinc-800 rounded skew-broadcast overflow-hidden relative border border-zinc-700 my-1">
+                                <div id="hudP2DamageTrail" class="absolute top-0 right-0 h-full bg-white transition-all duration-500" style="width: 100%"></div>
+                                <div id="hudP2Health" class="absolute top-0 right-0 h-full bg-gradient-to-l from-blue-600 via-indigo-500 to-emerald-400 transition-all duration-75" style="width: 100%"></div>
+                            </div>
+                            <!-- Stamina & Finisher Row P2 -->
+                            <div class="grid grid-cols-2 gap-2 items-center mt-1">
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-amber-400 font-bold"><span id="hudP2FinText">0%</span><span>MOMENTUM</span></div>
+                                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div id="hudP2Finisher" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-150 ml-auto" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-[10px] text-zinc-400 font-bold"><span id="hudP2StamText">100%</span><span>STAMINA</span></div>
+                                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                        <div id="hudP2Stamina" class="h-full bg-sky-400 transition-all duration-75 ml-auto" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Finisher Ready Prompt P2 -->
+                    <div id="hudP2FinisherReady" class="hidden mt-1.5 text-center py-0.5 rounded bg-gradient-to-r from-blue-500 to-amber-500 text-zinc-950 font-broadcast text-lg font-bold tracking-wider finisher-pulse">
+                        🔥 P2 FINISHER READY! PRESS [ENTER] FOR SIGNATURE!
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- MAIN 60FPS RING CANVAS -->
+        <div id="canvasContainer" class="flex-1 w-full h-full relative flex items-center justify-center overflow-hidden">
+            <canvas id="gameCanvas" class="w-full h-full"></canvas>
+
+            <!-- PINFALL COUNT OVERLAY -->
+            <div id="pinfallOverlay" class="hidden absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-30 bg-black/35">
+                <div class="text-amber-400 font-broadcast text-4xl tracking-widest uppercase drop-shadow">REFEREE PINFALL COUNT</div>
+                <div id="pinCountNumber" class="font-broadcast text-[130px] leading-none font-bold text-white drop-shadow-[0_0_35px_rgba(245,158,11,0.9)] animate-ping">1</div>
+                <div id="kickoutPrompt" class="mt-4 px-5 py-2 rounded-full bg-rose-600/90 border border-white text-white font-bold text-sm uppercase tracking-wider shadow-xl pointer-events-auto cursor-pointer">
+                    MASH [J] / [K] OR TAP HERE TO KICK OUT!
+                </div>
+            </div>
+
+            <!-- VICTORY / CHAMPIONSHIP MODAL OVERLAY -->
+            <div id="victoryModal" class="hidden absolute inset-0 bg-black/80 backdrop-blur-md z-40 flex items-center justify-center p-4">
+                <div class="max-w-md w-full bg-zinc-900 border-2 border-amber-500 rounded-2xl p-6 text-center gold-border-glow">
+                    <div class="text-xs font-extrabold uppercase tracking-widest text-amber-400 mb-1">HERE IS YOUR WINNER... AND UNDISPUTED CHAMPION!</div>
+                    <h2 id="winnerNameTitle" class="font-broadcast text-6xl font-bold text-white tracking-wider leading-none mb-2">ROMAN REIGNS</h2>
+                    <p id="winnerMethodSubtitle" class="text-xs text-zinc-300 mb-4">Victory by Pinfall after Spear!</p>
+                    
+                    <div class="flex justify-center my-3">
+                        <canvas id="winnerPortraitCanvas" width="180" height="180" class="w-36 h-36 rounded-full bg-gradient-to-b from-amber-500/30 to-zinc-950 border-2 border-amber-400 shadow-xl"></canvas>
+                    </div>
+
+                    <div class="flex gap-3 mt-5">
+                        <button id="btnRematch" class="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-broadcast text-2xl font-bold tracking-wider uppercase transition">
+                            🔄 Instant Rematch
+                        </button>
+                        <button id="btnVictoryRoster" class="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-broadcast text-2xl font-bold tracking-wider uppercase border border-zinc-600 transition">
+                            👥 Superstar Roster
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INTERACTIVE ON-SCREEN CONTROLS & KEYBIND DOCK -->
+        <div class="bg-zinc-950/95 border-t border-zinc-800 px-3 py-2 z-20 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <!-- Left Virtual D-Pad / Movement Buttons -->
+            <div class="flex items-center gap-1.5">
+                <button data-action="left" class="touch-ctrl px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-rose-600 text-white font-bold text-xs border border-zinc-700 flex items-center gap-1">
+                    ◀ <span class="hidden sm:inline">[A] Left</span>
+                </button>
+                <button data-action="right" class="touch-ctrl px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-rose-600 text-white font-bold text-xs border border-zinc-700 flex items-center gap-1">
+                    <span class="hidden sm:inline">[D] Right</span> ▶
+                </button>
+                <button data-action="sprint" class="touch-ctrl px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-amber-500 active:text-black text-amber-400 font-bold text-xs border border-zinc-700">
+                    🏃 [Shift] Rope Run
+                </button>
+                <button data-action="block" class="touch-ctrl px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-sky-600 text-sky-300 font-bold text-xs border border-zinc-700">
+                    🛡️ [S / L] Block/Dodge
+                </button>
+            </div>
+
+            <!-- Live Commentary Ticker -->
+            <div id="commentaryTicker" class="hidden xl:flex items-center gap-2 text-xs text-zinc-300 bg-zinc-900/90 border border-zinc-800 px-3 py-1.5 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                <span id="commentaryText" class="font-medium italic">"Welcome to WWE Main Event! The crowd is electric!"</span>
+            </div>
+
+            <!-- Right Combat Action Buttons -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <button data-action="light" class="touch-ctrl px-3 py-2 rounded-lg bg-rose-950/90 hover:bg-rose-800 active:scale-95 text-rose-200 font-bold text-xs border border-rose-600/50">
+                    👊 [J] Light Strike
+                </button>
+                <button data-action="heavy" class="touch-ctrl px-3 py-2 rounded-lg bg-orange-950/90 hover:bg-orange-800 active:scale-95 text-orange-200 font-bold text-xs border border-orange-600/50">
+                    🦵 [K] Heavy Boot
+                </button>
+                <button data-action="grapple" class="touch-ctrl px-3 py-2 rounded-lg bg-purple-950/90 hover:bg-purple-800 active:scale-95 text-purple-200 font-bold text-xs border border-purple-600/50">
+                    🤼 [U] Grapple Slam
+                </button>
+                <button data-action="pin" class="touch-ctrl px-3 py-2 rounded-lg bg-emerald-950/90 hover:bg-emerald-800 active:scale-95 text-emerald-200 font-bold text-xs border border-emerald-600/50">
+                    1️⃣2️⃣3️⃣ [I] Pinfall
+                </button>
+                <button data-action="finisher" class="touch-ctrl px-3.5 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 active:scale-95 text-zinc-950 font-extrabold text-xs shadow-md">
+                    ⚡ [SPACE] FINISHER
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTROLS HELP MODAL -->
+    <div id="controlsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="max-w-xl w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+                <h3 class="font-broadcast text-3xl text-amber-400 tracking-wider">PRO WRESTLING CONTROLS & MECHANICS</h3>
+                <button id="btnCloseControlsModal" class="text-zinc-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="bg-zinc-950 p-3.5 rounded-xl border border-rose-500/30 space-y-2">
+                    <div class="font-bold text-rose-400 uppercase tracking-wider mb-1">Player 1 (Keyboard / Touch)</div>
+                    <div class="flex justify-between"><span>Move Left / Right:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">A / D</kbd></div>
+                    <div class="flex justify-between"><span>Jump / Aerial Dropkick:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">W</kbd></div>
+                    <div class="flex justify-between"><span>Block / Dodge Roll:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">S or L</kbd></div>
+                    <div class="flex justify-between"><span>Rope Rebound Sprint:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">Shift + A/D</kbd></div>
+                    <div class="flex justify-between"><span>Fast Jab Combo:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">J</kbd></div>
+                    <div class="flex justify-between"><span>Heavy Strike / Clothesline:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">K</kbd></div>
+                    <div class="flex justify-between"><span>Grapple Suplex / Chokeslam:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">U</kbd></div>
+                    <div class="flex justify-between"><span>Attempt Pinfall (1-2-3):</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">I</kbd></div>
+                    <div class="flex justify-between text-amber-400 font-bold"><span>Signature Finisher:</span><kbd class="px-1.5 py-0.5 bg-amber-500 text-black rounded">SPACE</kbd></div>
+                </div>
+                <div class="bg-zinc-950 p-3.5 rounded-xl border border-blue-500/30 space-y-2">
+                    <div class="font-bold text-blue-400 uppercase tracking-wider mb-1">Player 2 (Local 2P Mode)</div>
+                    <div class="flex justify-between"><span>Move Left / Right:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">◀ / ▶</kbd></div>
+                    <div class="flex justify-between"><span>Jump:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">▲</kbd></div>
+                    <div class="flex justify-between"><span>Block / Guard:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">▼</kbd></div>
+                    <div class="flex justify-between"><span>Light Strike:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">Numpad 1 / N</kbd></div>
+                    <div class="flex justify-between"><span>Heavy Strike:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">Numpad 2 / M</kbd></div>
+                    <div class="flex justify-between"><span>Grapple Slam:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">Numpad 3 / ,</kbd></div>
+                    <div class="flex justify-between"><span>Attempt Pinfall:</span><kbd class="px-1.5 py-0.5 bg-zinc-800 rounded text-white">Numpad 0 / .</kbd></div>
+                    <div class="flex justify-between text-amber-400 font-bold"><span>Signature Finisher:</span><kbd class="px-1.5 py-0.5 bg-amber-500 text-black rounded">ENTER</kbd></div>
+                </div>
+            </div>
+            <p class="text-xs text-zinc-400 mt-4 leading-relaxed">
+                💡 <strong>Pro Tip:</strong> Lean into the left or right ring ropes while holding <kbd class="px-1 bg-zinc-800 rounded">Shift</kbd> to bounce off with elastic velocity and unleash a devastating flying clothesline! Wear down your opponent's health before pressing <kbd class="px-1 bg-zinc-800 rounded">I</kbd> for the referee 3-count!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================================================
+           1. WWE SUPERSTAR ROSTER DATABASE WITH ANATOMICAL & FACIAL DETAILS
+           ============================================================================ */
+        const SUPERSTARS = [
+            {
+                id: 'roman',
+                name: 'ROMAN REIGNS',
+                nickname: '"The Tribal Chief"',
+                weight: '6\'3" • 265 LBS',
+                ovr: 97,
+                stats: { power: 96, speed: 85, grapple: 94, stamina: 91 },
+                finisherName: 'Spear & Superman Punch',
+                finisherType: 'spear',
+                skinBase: '#c68b59',
+                skinShadow: '#996236',
+                skinHighlight: '#dfa978',
+                hairStyle: 'long_wet',
+                hairColor: '#141416',
+                beardStyle: 'full_tribal',
+                eyeColor: '#3b2f2f',
+                bodyScale: { shoulder: 1.08, chest: 1.07, height: 1.02 },
+                attire: {
+                    trunkColor: '#111115',
+                    trimColor: '#e11d48',
+                    pants: true,
+                    pantsColor: '#141419',
+                    rightGauntlet: '#dc2626', // Iconic red/gold gauntlet
+                    leftWristband: '#18181b',
+                    chestTattoo: 'polynesian',
+                    bootColor: '#09090b'
+                }
+            },
+            {
+                id: 'rock',
+                name: 'THE ROCK',
+                nickname: '"The People\'s Champ"',
+                weight: '6\'5" • 260 LBS',
+                ovr: 96,
+                stats: { power: 94, speed: 89, grapple: 95, stamina: 92 },
+                finisherName: 'Rock Bottom & People\'s Elbow',
+                finisherType: 'rockbottom',
+                skinBase: '#cd9162',
+                skinShadow: '#9e673c',
+                skinHighlight: '#e8b48a',
+                hairStyle: 'bald',
+                hairColor: '#111111',
+                beardStyle: 'clean_stubble',
+                eyeColor: '#2d221b',
+                bodyScale: { shoulder: 1.10, chest: 1.09, height: 1.04 },
+                attire: {
+                    trunkColor: '#0f0f12',
+                    trimColor: '#f59e0b',
+                    pants: false,
+                    kneePadColor: '#111115',
+                    elbowPadRight: '#dc2626',
+                    chestTattoo: 'brahma_shoulder',
+                    bootColor: '#111115'
+                }
+            },
+            {
+                id: 'cena',
+                name: 'JOHN CENA',
+                nickname: '"The GOAT • Never Give Up"',
+                weight: '6\'1" • 251 LBS',
+                ovr: 95,
+                stats: { power: 95, speed: 83, grapple: 96, stamina: 96 },
+                finisherName: 'Attitude Adjustment (AA)',
+                finisherType: 'aa_slam',
+                skinBase: '#e3ac88',
+                skinShadow: '#b87d58',
+                skinHighlight: '#f7cbb0',
+                hairStyle: 'crew_fade',
+                hairColor: '#3b2c20',
+                beardStyle: 'clean',
+                eyeColor: '#2563eb',
+                bodyScale: { shoulder: 1.12, chest: 1.10, height: 0.99 },
+                attire: {
+                    trunkColor: '#1d4ed8',
+                    trimColor: '#f97316',
+                    pants: true,
+                    jorts: true,
+                    pantsColor: '#2563eb',
+                    leftWristband: '#f97316',
+                    rightGauntlet: '#22c55e',
+                    bootColor: '#18181b'
+                }
+            },
+            {
+                id: 'undertaker',
+                name: 'THE UNDERTAKER',
+                nickname: '"The Deadman • Phenom"',
+                weight: '6\'10" • 309 LBS',
+                ovr: 96,
+                stats: { power: 98, speed: 76, grapple: 98, stamina: 90 },
+                finisherName: 'Tombstone Piledriver',
+                finisherType: 'tombstone',
+                skinBase: '#d8b096',
+                skinShadow: '#a67f67',
+                skinHighlight: '#edd0bd',
+                hairStyle: 'long_dark',
+                hairColor: '#111113',
+                beardStyle: 'deadman_goatee',
+                eyeColor: '#6b7280',
+                bodyScale: { shoulder: 1.11, chest: 1.09, height: 1.08 },
+                attire: {
+                    trunkColor: '#09090b',
+                    trimColor: '#9333ea',
+                    pants: true,
+                    singlet: true,
+                    pantsColor: '#0d0d12',
+                    rightGauntlet: '#18181b',
+                    leftWristband: '#18181b',
+                    bootColor: '#09090b'
+                }
+            },
+            {
+                id: 'lesnar',
+                name: 'BROCK LESNAR',
+                nickname: '"The Beast Incarnate"',
+                weight: '6\'3" • 286 LBS',
+                ovr: 97,
+                stats: { power: 99, speed: 88, grapple: 99, stamina: 88 },
+                finisherName: 'F-5 Cyclone Slam & Suplex City',
+                finisherType: 'f5_slam',
+                skinBase: '#e5b08f',
+                skinShadow: '#ba7e5c',
+                skinHighlight: '#f7ceb5',
+                hairStyle: 'viking_braid',
+                hairColor: '#d4af37',
+                beardStyle: 'blonde_beard',
+                eyeColor: '#3b82f6',
+                bodyScale: { shoulder: 1.18, chest: 1.16, height: 1.03 },
+                attire: {
+                    trunkColor: '#09090b',
+                    trimColor: '#dc2626',
+                    pants: false,
+                    mmaShorts: true,
+                    kneePadColor: '#18181b',
+                    rightGauntlet: '#18181b',
+                    leftWristband: '#18181b',
+                    chestTattoo: 'chest_sword',
+                    bootColor: '#09090b'
+                }
+            },
+            {
+                id: 'rollins',
+                name: 'SETH ROLLINS',
+                nickname: '"The Visionary • Architect"',
+                weight: '6\'1" • 217 LBS',
+                ovr: 94,
+                stats: { power: 86, speed: 97, grapple: 91, stamina: 96 },
+                finisherName: 'Curb Stomp & Pedigree',
+                finisherType: 'stomp',
+                skinBase: '#d19a72',
+                skinShadow: '#a36e49',
+                skinHighlight: '#e8ba98',
+                hairStyle: 'long_wet',
+                hairColor: '#171515',
+                beardStyle: 'full_tribal',
+                eyeColor: '#3b2f2f',
+                bodyScale: { shoulder: 1.01, chest: 1.00, height: 0.99 },
+                attire: {
+                    trunkColor: '#18181b',
+                    trimColor: '#eab308',
+                    pants: true,
+                    pantsColor: '#18181b',
+                    rightGauntlet: '#eab308',
+                    leftWristband: '#eab308',
+                    bootColor: '#ca8a04'
+                }
+            }
+        ];
+
+        /* ============================================================================
+           2. PROCEDURAL SOUND ENGINE (TONE.JS SYNTHESIZED AUDIO)
+           ============================================================================ */
+        class SoundEngine {
+            constructor() {
+                this.enabled = true;
+                this.initialized = false;
+            }
+            async init() {
+                if (this.initialized) return;
+                try {
+                    await Tone.start();
+                    this.impactSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.06,
+                        octaves: 4,
+                        oscillator: { type: 'sine' },
+                        envelope: { attack: 0.001, decay: 0.25, sustain: 0.01, release: 0.2 }
+                    }).toDestination();
+
+                    this.slamNoise = new Tone.NoiseSynth({
+                        noise: { type: 'brown' },
+                        envelope: { attack: 0.005, decay: 0.35, sustain: 0 }
+                    }).toDestination();
+
+                    this.bellSynth = new Tone.MetalSynth({
+                        frequency: 380,
+                        envelope: { attack: 0.001, decay: 1.1, release: 0.4 },
+                        harmonicity: 5.1,
+                        modulationIndex: 16,
+                        resonance: 3200,
+                        octaves: 1.2
+                    }).toDestination();
+                    this.bellSynth.volume.value = -8;
+                    this.initialized = true;
+                } catch (e) {
+                    console.warn('Audio init skipped:', e);
+                }
+            }
+            playStrike(heavy = false) {
+                if (!this.enabled || !this.initialized) return;
+                try {
+                    this.impactSynth.triggerAttackRelease(heavy ? 'C1' : 'G1', '8n');
+                } catch (e) {}
+            }
+            playSlam() {
+                if (!this.enabled || !this.initialized) return;
+                try {
+                    this.impactSynth.triggerAttackRelease('A0', '4n');
+                    this.slamNoise.triggerAttackRelease('4n');
+                } catch (e) {}
+            }
+            playBell() {
+                if (!this.enabled || !this.initialized) return;
+                try {
+                    this.bellSynth.triggerAttackRelease('C5', '2n');
+                } catch (e) {}
+            }
+        }
+        const sfx = new SoundEngine();
+
+        /* ============================================================================
+           3. HIGH-REALISM PROCEDURAL FACE & ANATOMY RENDERER
+              Draws realistic shaded faces, eyes, eyebrows, beards, noses, mouths,
+              hair strands, and defined muscular torsos for both portraits and in-ring fighters.
+           ============================================================================ */
+        function drawRealisticHead(ctx, star, x, y, scale, facing, expression = 'determined', sweatPhase = 0) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(facing * scale, scale);
+
+            // Back hair layer for long-haired superstars
+            if (star.hairStyle === 'long_wet' || star.hairStyle === 'long_dark') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-16, -8);
+                ctx.quadraticCurveTo(-24, 12, -19, 28);
+                ctx.lineTo(14, 28);
+                ctx.quadraticCurveTo(20, 10, 15, -8);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Muscular Neck & Traps
+            const neckGrad = ctx.createLinearGradient(-10, 12, 10, 26);
+            neckGrad.addColorStop(0, star.skinShadow);
+            neckGrad.addColorStop(0.5, star.skinBase);
+            neckGrad.addColorStop(1, star.skinShadow);
+            ctx.fillStyle = neckGrad;
+            ctx.beginPath();
+            ctx.moveTo(-10, 12);
+            ctx.lineTo(10, 12);
+            ctx.lineTo(13, 25);
+            ctx.lineTo(-13, 25);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ears
+            ctx.fillStyle = star.skinShadow;
+            ctx.beginPath();
+            ctx.ellipse(-14.5, 0, 3.2, 6, -0.1, 0, Math.PI * 2);
+            ctx.ellipse(14.5, 0, 3.2, 6, 0.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cranium & Chiseled Jawline with 3D Radial Skin Shading
+            const faceGrad = ctx.createRadialGradient(3, -5, 2, 0, 0, 20);
+            faceGrad.addColorStop(0, star.skinHighlight);
+            faceGrad.addColorStop(0.6, star.skinBase);
+            faceGrad.addColorStop(1, star.skinShadow);
+
+            ctx.fillStyle = faceGrad;
+            ctx.beginPath();
+            ctx.moveTo(-14, -10);
+            ctx.quadraticCurveTo(-14, -22, 0, -22);
+            ctx.quadraticCurveTo(14, -22, 14, -10);
+            ctx.lineTo(13.5, 4);
+            ctx.quadraticCurveTo(12, 14, 5, 18);
+            ctx.lineTo(-5, 18);
+            ctx.quadraticCurveTo(-12, 14, -13.5, 4);
+            ctx.closePath();
+            ctx.fill();
+
+            // Cheekbone contour highlights
+            ctx.fillStyle = 'rgba(255,255,255,0.14)';
+            ctx.beginPath();
+            ctx.ellipse(-7, 1, 3.5, 2, -0.3, 0, Math.PI * 2);
+            ctx.ellipse(8, 1, 3.5, 2, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Facial Hair / Beard Styles
+            if (star.beardStyle === 'full_tribal' || star.beardStyle === 'blonde_beard') {
+                ctx.fillStyle = star.beardStyle === 'blonde_beard' ? '#b8922e' : '#16161a';
+                ctx.beginPath();
+                ctx.moveTo(-13.5, 1);
+                ctx.quadraticCurveTo(-12, 16, -5, 19.5);
+                ctx.lineTo(5, 19.5);
+                ctx.quadraticCurveTo(12, 16, 13.5, 1);
+                ctx.lineTo(11, 2);
+                ctx.quadraticCurveTo(8, 8, 5, 8);
+                ctx.lineTo(-5, 8);
+                ctx.quadraticCurveTo(-8, 8, -11, 2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Mustache
+                ctx.beginPath();
+                ctx.moveTo(-7, 8.5);
+                ctx.quadraticCurveTo(0, 6.2, 7, 8.5);
+                ctx.quadraticCurveTo(8, 11.5, 5, 11.5);
+                ctx.quadraticCurveTo(0, 9.8, -5, 11.5);
+                ctx.closePath();
+                ctx.fill();
+            } else if (star.beardStyle === 'deadman_goatee') {
+                ctx.fillStyle = '#18181b';
+                ctx.beginPath();
+                ctx.moveTo(-5.5, 8);
+                ctx.lineTo(5.5, 8);
+                ctx.lineTo(4.5, 19);
+                ctx.lineTo(-4.5, 19);
+                ctx.closePath();
+                ctx.fill();
+            } else if (star.beardStyle === 'clean_stubble') {
+                ctx.fillStyle = 'rgba(25, 20, 18, 0.16)';
+                ctx.beginPath();
+                ctx.moveTo(-12, 3);
+                ctx.quadraticCurveTo(0, 20, 12, 3);
+                ctx.quadraticCurveTo(0, 14, -12, 3);
+                ctx.fill();
+            }
+
+            // Realistic Eyes (Sclera, Iris, Pupil, Eyelid)
+            const drawEye = (ex, ey, isRight) => {
+                ctx.save();
+                ctx.translate(ex, ey);
+                if (expression === 'pain') {
+                    // Squinted wincing eye
+                    ctx.strokeStyle = '#1f1612';
+                    ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    ctx.moveTo(-3.5, -1);
+                    ctx.lineTo(2.5, 0.5);
+                    ctx.lineTo(-3.5, 1.8);
+                    ctx.stroke();
+                } else {
+                    // Sclera
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 3.6, 2.0, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Iris
+                    ctx.fillStyle = star.eyeColor;
+                    ctx.beginPath();
+                    ctx.arc(0.6, 0, 1.6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Pupil
+                    ctx.fillStyle = '#09090b';
+                    ctx.beginPath();
+                    ctx.arc(0.7, 0, 0.8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Eye catchlight
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(1.1, -0.5, 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Upper eyelid shadow line
+                    ctx.strokeStyle = '#271c15';
+                    ctx.lineWidth = 1.1;
+                    ctx.beginPath();
+                    ctx.arc(0, 0.4, 3.6, Math.PI * 1.1, Math.PI * 1.9);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            };
+
+            drawEye(-5.2, -3.5, false);
+            drawEye(5.8, -3.5, true);
+
+            // Expressive Eyebrows (The Rock's People's Eyebrow, Angry Roar, or Focused)
+            ctx.strokeStyle = star.hairColor === '#d4af37' ? '#9a7b2c' : '#181412';
+            ctx.lineWidth = 2.2;
+            ctx.lineCap = 'round';
+            const browTilt = expression === 'roar' ? 2.2 : (expression === 'pain' ? -1.5 : 1.2);
+            // Left brow
+            ctx.beginPath();
+            ctx.moveTo(-9, -6.5 - browTilt * 0.4);
+            ctx.quadraticCurveTo(-5, -8.2, -1.8, -5.8 + browTilt * 0.5);
+            ctx.stroke();
+            // Right brow (Rock raises one eyebrow on idle!)
+            const rockBrowBoost = (star.id === 'rock' && expression === 'determined') ? -2.2 : 0;
+            ctx.beginPath();
+            ctx.moveTo(2.2, -5.8 + browTilt * 0.5);
+            ctx.quadraticCurveTo(6, -8.2 + rockBrowBoost, 9.5, -6.5 - browTilt * 0.4);
+            ctx.stroke();
+
+            // Sculpted NoseBridge & Nostril Shading
+            ctx.strokeStyle = star.skinShadow;
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            ctx.moveTo(0.8, -4.5);
+            ctx.lineTo(2.2, 3.2);
+            ctx.lineTo(-1.2, 4.2);
+            ctx.stroke();
+
+            // Nose bridge highlight
+            ctx.strokeStyle = star.skinHighlight;
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(-0.2, -4);
+            ctx.lineTo(0.9, 2.5);
+            ctx.stroke();
+
+            // Mouth / Expression (Teeth clench, Battle Roar, Pain Grimace, Smirk)
+            if (expression === 'roar') {
+                ctx.fillStyle = '#450a0a';
+                ctx.beginPath();
+                ctx.ellipse(0.5, 11.2, 5.5, 3.8, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Upper & lower teeth
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-3.5, 8.2, 8, 1.8);
+                ctx.fillRect(-3.0, 12.6, 7, 1.4);
+            } else if (expression === 'pain') {
+                ctx.fillStyle = '#3b0764';
+                ctx.beginPath();
+                ctx.ellipse(0.5, 11.5, 4.8, 2.5, -0.1, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(-3, 9.8, 7, 1.5);
+            } else {
+                // Determined lip line & subtle smirk
+                ctx.strokeStyle = '#5c3422';
+                ctx.lineWidth = 1.6;
+                ctx.beginPath();
+                ctx.moveTo(-4.2, 10.8);
+                ctx.quadraticCurveTo(0.5, 11.4, 5.0, 10.2);
+                ctx.stroke();
+            }
+
+            // Hair Styles (Top & Forehead Strands)
+            if (star.hairStyle === 'crew_fade') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-13.5, -10);
+                ctx.quadraticCurveTo(-14, -23, 0, -23);
+                ctx.quadraticCurveTo(14, -23, 13.5, -10);
+                ctx.quadraticCurveTo(0, -14, -13.5, -10);
+                ctx.fill();
+            } else if (star.hairStyle === 'viking_braid') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-9, -15);
+                ctx.quadraticCurveTo(0, -25, 9, -15);
+                ctx.quadraticCurveTo(0, -12, -9, -15);
+                ctx.fill();
+                // Top knot bun
+                ctx.beginPath();
+                ctx.arc(-4, -23, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (star.hairStyle === 'long_wet' || star.hairStyle === 'long_dark') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-14, -9);
+                ctx.quadraticCurveTo(-15, -23, 0, -23);
+                ctx.quadraticCurveTo(15, -23, 14, -9);
+                ctx.quadraticCurveTo(5, -15, -14, -9);
+                ctx.fill();
+                // Wet hair strands hanging across forehead
+                ctx.strokeStyle = star.hairColor;
+                ctx.lineWidth = 1.4;
+                ctx.beginPath();
+                ctx.moveTo(-6, -16);
+                ctx.quadraticCurveTo(-9, -8, -7, -1);
+                ctx.moveTo(4, -16);
+                ctx.quadraticCurveTo(8, -9, 6, -2);
+                ctx.stroke();
+            }
+
+            // Specular Sweat Shine on Forehead
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.22 + Math.sin(sweatPhase) * 0.08})`;
+            ctx.beginPath();
+            ctx.ellipse(3, -13, 5.5, 2.2, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /* ============================================================================
+           4. PORTRAIT GENERATOR FOR SELECTION CARDS & BROADCAST HUD
+           ============================================================================ */
+        function renderSuperstarPortrait(canvas, star, expression = 'determined', isMini = false) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            ctx.save();
+            // Center & scale
+            if (isMini) {
+                ctx.translate(w * 0.5, h * 0.56);
+                drawRealisticHead(ctx, star, 0, 0, 1.35, 1, expression, 1.2);
+                ctx.restore();
+                return;
+            }
+
+            ctx.translate(w * 0.5, h * 0.62);
+            const s = 2.4;
+
+            // Muscular Traps & Upper Chest in Portrait
+            const torsoGrad = ctx.createRadialGradient(0, 40, 10, 0, 50, 95);
+            torsoGrad.addColorStop(0, star.skinHighlight);
+            torsoGrad.addColorStop(0.55, star.skinBase);
+            torsoGrad.addColorStop(1, star.skinShadow);
+
+            ctx.fillStyle = torsoGrad;
+            ctx.beginPath();
+            ctx.moveTo(-28, 22);
+            ctx.quadraticCurveTo(-78 * star.bodyScale.shoulder, 30, -90 * star.bodyScale.shoulder, 85);
+            ctx.lineTo(90 * star.bodyScale.shoulder, 85);
+            ctx.quadraticCurveTo(78 * star.bodyScale.shoulder, 30, 28, 22);
+            ctx.closePath();
+            ctx.fill();
+
+            // Singlet or Tattoos on Chest
+            if (star.attire.singlet) {
+                ctx.fillStyle = '#09090b';
+                ctx.beginPath();
+                ctx.moveTo(-42, 32);
+                ctx.lineTo(-22, 32);
+                ctx.quadraticCurveTo(0, 58, 22, 32);
+                ctx.lineTo(42, 32);
+                ctx.lineTo(55, 88);
+                ctx.lineTo(-55, 88);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Pectoral muscle definition lines
+                ctx.strokeStyle = star.skinShadow;
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.moveTo(-48, 52);
+                ctx.quadraticCurveTo(-22, 72, -3, 62);
+                ctx.moveTo(48, 52);
+                ctx.quadraticCurveTo(22, 72, 3, 62);
+                ctx.stroke();
+
+                // Tattoo Detailing (Roman Polynesian / Rock Brahma / Lesnar Sword)
+                if (star.attire.chestTattoo === 'polynesian') {
+                    ctx.strokeStyle = 'rgba(20, 25, 30, 0.55)';
+                    ctx.lineWidth = 3;
+                    for (let r = 18; r <= 46; r += 7) {
+                        ctx.beginPath();
+                        ctx.arc(-45, 50, r, -0.5, 2.2);
+                        ctx.stroke();
+                    }
+                } else if (star.attire.chestTattoo === 'chest_sword') {
+                    ctx.fillStyle = 'rgba(25, 25, 30, 0.65)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 34);
+                    ctx.lineTo(6, 55);
+                    ctx.lineTo(14, 55);
+                    ctx.lineTo(14, 60);
+                    ctx.lineTo(4, 60);
+                    ctx.lineTo(3, 85);
+                    ctx.lineTo(-3, 85);
+                    ctx.lineTo(-4, 60);
+                    ctx.lineTo(-14, 60);
+                    ctx.lineTo(-14, 55);
+                    ctx.lineTo(-6, 55);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (star.attire.chestTattoo === 'brahma_shoulder') {
+                    ctx.fillStyle = 'rgba(20, 25, 30, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(58, 52, 16, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Rim lighting on shoulders
+            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-28, 23);
+            ctx.quadraticCurveTo(-72 * star.bodyScale.shoulder, 30, -84 * star.bodyScale.shoulder, 70);
+            ctx.moveTo(28, 23);
+            ctx.quadraticCurveTo(72 * star.bodyScale.shoulder, 30, 84 * star.bodyScale.shoulder, 70);
+            ctx.stroke();
+
+            // Render Detailed Head on top of shoulders
+            drawRealisticHead(ctx, star, 0, -18, s, 1, expression, 0.8);
+            ctx.restore();
+        }
+
+        /* ============================================================================
+           5. CHARACTER SELECTION & ROSTER UI MANAGEMENT
+           ============================================================================ */
+        let selectedP1Index = 0; // Roman Reigns
+        let selectedP2Index = 1; // The Rock
+        let activeSelectingSlot = 1; // 1 for P1, 2 for P2
+        let matchMode = 'cpu'; // 'cpu' or 'pvp'
+
+        function initRosterUI() {
+            const grid = document.getElementById('rosterGrid');
+            grid.innerHTML = '';
+
+            SUPERSTARS.forEach((star, idx) => {
+                const card = document.createElement('div');
+                card.className = `relative group cursor-pointer rounded-xl bg-zinc-950/90 border-2 transition-all duration-200 p-2 flex flex-col items-center overflow-hidden hover:scale-[1.02]`;
+                card.id = `rosterCard_${idx}`;
+
+                const portraitCanvas = document.createElement('canvas');
+                portraitCanvas.width = 160;
+                portraitCanvas.height = 135;
+                portraitCanvas.className = 'w-28 h-24 object-contain pointer-events-none';
+                renderSuperstarPortrait(portraitCanvas, star, 'determined', false);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'w-full text-center mt-1 z-10';
+                infoDiv.innerHTML = `
+                    <div class="font-broadcast text-xl font-bold leading-none text-white truncate">${star.name}</div>
+                    <div class="text-[10px] text-amber-400 font-bold tracking-wider">${star.ovr} OVR • ${star.stats.power} PWR</div>
+                `;
+
+                const badgeContainer = document.createElement('div');
+                badgeContainer.id = `rosterBadge_${idx}`;
+                badgeContainer.className = 'absolute top-1.5 right-1.5 flex gap-1';
+
+                card.appendChild(portraitCanvas);
+                card.appendChild(infoDiv);
+                card.appendChild(badgeContainer);
+
+                card.addEventListener('click', () => {
+                    sfx.init();
+                    sfx.playStrike(false);
+                    if (activeSelectingSlot === 1) {
+                        selectedP1Index = idx;
+                        activeSelectingSlot = 2; // Auto-toggle to P2 for convenience
+                    } else {
+                        selectedP2Index = idx;
+                        activeSelectingSlot = 1;
+                    }
+                    updateRosterHighlights();
+                });
+
+                grid.appendChild(card);
+            });
+
+            updateRosterHighlights();
+        }
+
+        function updateRosterHighlights() {
+            const p1 = SUPERSTARS[selectedP1Index];
+            const p2 = SUPERSTARS[selectedP2Index];
+
+            // Slot selector buttons
+            const btnSlot1 = document.getElementById('btnSelectSlotP1');
+            const btnSlot2 = document.getElementById('btnSelectSlotP2');
+            if (activeSelectingSlot === 1) {
+                btnSlot1.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white transition shadow';
+                btnSlot2.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+            } else {
+                btnSlot1.className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+                btnSlot2.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white transition shadow';
+            }
+
+            // Update P1 Card
+            document.getElementById('p1TitleTag').textContent = p1.nickname;
+            document.getElementById('p1NameDisplay').textContent = p1.name;
+            document.getElementById('p1WeightDisplay').textContent = p1.weight;
+            document.getElementById('p1OvrDisplay').textContent = `${p1.ovr} OVR`;
+            document.getElementById('p1StatPowerVal').textContent = p1.stats.power;
+            document.getElementById('p1StatPowerBar').style.width = `${p1.stats.power}%`;
+            document.getElementById('p1StatSpeedVal').textContent = p1.stats.speed;
+            document.getElementById('p1StatSpeedBar').style.width = `${p1.stats.speed}%`;
+            document.getElementById('p1StatGrappleVal').textContent = p1.stats.grapple;
+            document.getElementById('p1StatGrappleBar').style.width = `${p1.stats.grapple}%`;
+            document.getElementById('p1StatStaminaVal').textContent = p1.stats.stamina;
+            document.getElementById('p1StatStaminaBar').style.width = `${p1.stats.stamina}%`;
+            document.getElementById('p1FinisherDisplay').textContent = `⚡ ${p1.finisherName}`;
+            renderSuperstarPortrait(document.getElementById('p1PortraitCanvas'), p1, 'determined', false);
+
+            // Update P2 Card
+            document.getElementById('p2TitleTag').textContent = p2.nickname;
+            document.getElementById('p2NameDisplay').textContent = p2.name;
+            document.getElementById('p2WeightDisplay').textContent = p2.weight;
+            document.getElementById('p2OvrDisplay').textContent = `${p2.ovr} OVR`;
+            document.getElementById('p2StatPowerVal').textContent = p2.stats.power;
+            document.getElementById('p2StatPowerBar').style.width = `${p2.stats.power}%`;
+            document.getElementById('p2StatSpeedVal').textContent = p2.stats.speed;
+            document.getElementById('p2StatSpeedBar').style.width = `${p2.stats.speed}%`;
+            document.getElementById('p2StatGrappleVal').textContent = p2.stats.grapple;
+            document.getElementById('p2StatGrappleBar').style.width = `${p2.stats.grapple}%`;
+            document.getElementById('p2StatStaminaVal').textContent = p2.stats.stamina;
+            document.getElementById('p2StatStaminaBar').style.width = `${p2.stats.stamina}%`;
+            document.getElementById('p2FinisherDisplay').textContent = `⚡ ${p2.finisherName}`;
+            renderSuperstarPortrait(document.getElementById('p2PortraitCanvas'), p2, 'determined', false);
+
+            // Update Roster Card Borders
+            SUPERSTARS.forEach((_, idx) => {
+                const card = document.getElementById(`rosterCard_${idx}`);
+                const badge = document.getElementById(`rosterBadge_${idx}`);
+                badge.innerHTML = '';
+
+                const isP1 = idx === selectedP1Index;
+                const isP2 = idx === selectedP2Index;
+
+                if (isP1 && isP2) {
+                    card.className = 'relative group cursor-pointer rounded-xl bg-zinc-900 border-2 border-amber-400 p-2 flex flex-col items-center overflow-hidden gold-border-glow';
+                    badge.innerHTML = `<span class="px-1.5 py-0.5 text-[10px] font-extrabold bg-rose-600 text-white rounded">P1</span><span class="px-1.5 py-0.5 text-[10px] font-extrabold bg-blue-600 text-white rounded">P2</span>`;
+                } else if (isP1) {
+                    card.className = 'relative group cursor-pointer rounded-xl bg-zinc-900 border-2 border-rose-500 p-2 flex flex-col items-center overflow-hidden red-border-glow';
+                    badge.innerHTML = `<span class="px-1.5 py-0.5 text-[10px] font-extrabold bg-rose-600 text-white rounded">P1</span>`;
+                } else if (isP2) {
+                    card.className = 'relative group cursor-pointer rounded-xl bg-zinc-900 border-2 border-blue-500 p-2 flex flex-col items-center overflow-hidden blue-border-glow';
+                    badge.innerHTML = `<span class="px-1.5 py-0.5 text-[10px] font-extrabold bg-blue-600 text-white rounded">${matchMode === 'cpu' ? 'CPU' : 'P2'}</span>`;
+                } else {
+                    card.className = 'relative group cursor-pointer rounded-xl bg-zinc-950/80 border border-zinc-800 hover:border-zinc-600 p-2 flex flex-col items-center overflow-hidden transition';
+                }
+            });
+        }
+
+        /* ============================================================================
+           6. 60FPS SKELETAL ARTICULATION & WRESTLING PHYSICS ENGINE
+           ============================================================================ */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Logical Ring Coordinates (1280 x 720 virtual broadcast resolution)
+        const V_WIDTH = 1280;
+        const V_HEIGHT = 720;
+        const RING_FLOOR_Y = 585;
+        const RING_LEFT_X = 190;
+        const RING_RIGHT_X = 1090;
+
+        let gameActive = false;
+        let lastFrameTime = performance.now();
+        let matchTimeSeconds = 0;
+        let hitStopTimer = 0;
+        let cameraShake = { x: 0, y: 0, intensity: 0 };
+        let flashAlpha = 0;
+
+        // Dynamic Ring Rope Flex Physics
+        const ropePhysics = {
+            leftDeflection: 0,
+            leftVel: 0,
+            rightDeflection: 0,
+            rightVel: 0
+        };
+
+        // Particle & Sweat System + Floating Hit Callouts
+        let particles = [];
+        let floatingTexts = [];
+        let crowdMembers = [];
+
+        function initCrowd() {
+            crowdMembers = [];
+            for (let row = 0; row < 4; row++) {
+                const count = 34;
+                for (let i = 0; i < count; i++) {
+                    crowdMembers.push({
+                        x: (i / count) * V_WIDTH + (row % 2) * 18,
+                        y: 135 + row * 48,
+                        phase: Math.random() * Math.PI * 2,
+                        speed: 2 + Math.random() * 3,
+                        shirtColor: ['#e11d48', '#2563eb', '#eab308', '#a855f7', '#ec4899', '#f8fafc'][Math.floor(Math.random() * 6)],
+                        hasSign: Math.random() < 0.16,
+                        signText: ['ACKNOWLEDGE ME', 'WRESTLEMANIA', 'SUPLEX CITY', '3:16', 'CHAMPION', 'FINISH HIM'][Math.floor(Math.random() * 6)]
+                    });
+                }
+            }
+        }
+        initCrowd();
+
+        class Wrestler {
+            constructor(starData, isPlayerOne, isAI = false) {
+                this.star = starData;
+                this.isP1 = isPlayerOne;
+                this.isAI = isAI;
+
+                this.x = isPlayerOne ? 430 : 850;
+                this.y = RING_FLOOR_Y;
+                this.vx = 0;
+                this.vy = 0;
+                this.facing = isPlayerOne ? 1 : -1;
+
+                this.maxHealth = 1000;
+                this.health = 1000;
+                this.damageTrail = 1000;
+                this.stamina = 100;
+                this.momentum = 0; // 0 to 100 Finisher meter
+
+                // State Machine: 'idle', 'walk', 'run', 'jump', 'block', 'dodge', 'light', 'heavy', 'grapple', 'finisher', 'hitstun', 'knockdown', 'pinning'
+                this.state = 'idle';
+                this.stateTimer = 0;
+                this.stateDuration = 0;
+                this.hitRegistered = false;
+                this.comboCount = 0;
+                this.comboResetTimer = 0;
+                this.animPhase = Math.random() * 10;
+                this.expression = 'determined';
+                this.aiDecisionTimer = 0;
+            }
+
+            get speedMultiplier() {
+                return 0.8 + (this.star.stats.speed / 100) * 0.45;
+            }
+            get powerMultiplier() {
+                return 0.85 + (this.star.stats.power / 100) * 0.35;
+            }
+
+            startAction(newState, duration, staminaCost = 0) {
+                if (this.stamina < staminaCost) return false;
+                this.stamina = Math.max(0, this.stamina - staminaCost);
+                this.state = newState;
+                this.stateTimer = 0;
+                this.stateDuration = duration;
+                this.hitRegistered = false;
+                return true;
+            }
+
+            update(dt, opponent) {
+                this.animPhase += dt * 6;
+
+                // Smooth health trail interpolation
+                if (this.damageTrail > this.health) {
+                    this.damageTrail = Math.max(this.health, this.damageTrail - dt * 190);
+                }
+
+                // Combo expiration
+                if (this.comboCount > 0) {
+                    this.comboResetTimer -= dt;
+                    if (this.comboResetTimer <= 0) {
+                        this.comboCount = 0;
+                        updateComboHUD();
+                    }
+                }
+
+                // Stamina natural recovery
+                if (['idle', 'walk', 'block'].includes(this.state)) {
+                    const regenRate = 14 * (this.star.stats.stamina / 90);
+                    this.stamina = Math.min(100, this.stamina + regenRate * dt);
+                }
+
+                // State progression
+                if (this.stateDuration > 0) {
+                    this.stateTimer += dt;
+                    if (this.stateTimer >= this.stateDuration) {
+                        if (this.state === 'knockdown') {
+                            // Rise up from canvas
+                            this.state = 'idle';
+                            this.stateDuration = 0;
+                            this.expression = 'determined';
+                        } else if (this.state !== 'pinning') {
+                            this.state = 'idle';
+                            this.stateDuration = 0;
+                            this.expression = 'determined';
+                        }
+                    }
+                }
+
+                // Apply Horizontal Velocity & Ring Friction
+                this.x += this.vx * dt;
+                if (this.state !== 'run' && this.state !== 'dodge') {
+                    this.vx *= Math.pow(0.001, dt);
+                }
+
+                // Gravity & Jump Physics
+                if (this.y < RING_FLOOR_Y || this.vy < 0) {
+                    this.vy += 1750 * dt;
+                    this.y += this.vy * dt;
+                    if (this.y >= RING_FLOOR_Y) {
+                        this.y = RING_FLOOR_Y;
+                        this.vy = 0;
+                        if (this.state === 'jump') {
+                            this.state = 'idle';
+                            this.stateDuration = 0;
+                        }
+                    }
+                }
+
+                // Elastic Ring Rope Rebound Physics
+                if (this.x <= RING_LEFT_X) {
+                    this.x = RING_LEFT_X;
+                    if (this.state === 'run' || Math.abs(this.vx) > 260) {
+                        ropePhysics.leftVel = -650;
+                        this.vx = 560 * this.speedMultiplier;
+                        this.facing = 1;
+                        this.state = 'run';
+                        spawnParticles(RING_LEFT_X - 15, this.y - 95, '#f59e0b', 10);
+                        setCommentary(`${this.star.name} rebounds hard off the ropes!`);
+                    } else {
+                        ropePhysics.leftDeflection = Math.max(ropePhysics.leftDeflection - 8, -18);
+                        this.vx = 0;
+                    }
+                } else if (this.x >= RING_RIGHT_X) {
+                    this.x = RING_RIGHT_X;
+                    if (this.state === 'run' || Math.abs(this.vx) > 260) {
+                        ropePhysics.rightVel = 650;
+                        this.vx = -560 * this.speedMultiplier;
+                        this.facing = -1;
+                        this.state = 'run';
+                        spawnParticles(RING_RIGHT_X + 15, this.y - 95, '#f59e0b', 10);
+                        setCommentary(`${this.star.name} bounces off the turnbuckle ropes!`);
+                    } else {
+                        ropePhysics.rightDeflection = Math.min(ropePhysics.rightDeflection + 8, 18);
+                        this.vx = 0;
+                    }
+                }
+
+                // Wrestler Body Collision Pushbox
+                const dist = opponent.x - this.x;
+                const minSep = 74;
+                if (Math.abs(dist) < minSep && Math.abs(this.y - opponent.y) < 90 && this.state !== 'dodge' && opponent.state !== 'dodge') {
+                    const push = (minSep - Math.abs(dist)) * 0.5;
+                    const dir = dist >= 0 ? 1 : -1;
+                    this.x = Math.max(RING_LEFT_X, Math.min(RING_RIGHT_X, this.x - dir * push));
+                    opponent.x = Math.max(RING_LEFT_X, Math.min(RING_RIGHT_X, opponent.x + dir * push));
+                }
+
+                // Auto-face opponent when idle/walking
+                if (['idle', 'walk', 'block'].includes(this.state)) {
+                    this.facing = opponent.x >= this.x ? 1 : -1;
+                }
+
+                // Check Active Attack Hitboxes
+                this.evaluateCombatHitbox(opponent);
+            }
+
+            evaluateCombatHitbox(opponent) {
+                if (this.hitRegistered) return;
+                if (!['light', 'heavy', 'grapple', 'finisher'].includes(this.state)) return;
+
+                const progress = this.stateTimer / this.stateDuration;
+                // Hit frame window
+                if (progress < 0.32 || progress > 0.72) return;
+
+                const reach = this.state === 'finisher' ? 165 : (this.state === 'heavy' ? 138 : (this.state === 'grapple' ? 118 : 112));
+                const dx = (opponent.x - this.x) * this.facing;
+                const dy = Math.abs(opponent.y - this.y);
+
+                if (dx >= -20 && dx <= reach && dy < 110) {
+                    this.hitRegistered = true;
+
+                    // Check if opponent dodged
+                    if (opponent.state === 'dodge') {
+                        spawnFloatingText(opponent.x, opponent.y - 160, 'DODGED!', '#38bdf8');
+                        return;
+                    }
+
+                    const isBlocked = opponent.state === 'block' && (this.state === 'light' || this.state === 'heavy');
+                    let dmg = 0;
+                    let moveLabel = '';
+
+                    if (this.state === 'light') {
+                        dmg = 42 * this.powerMultiplier;
+                        moveLabel = ['STIFF JAB!', 'RIGHT HOOK!', 'CHOP!'][this.comboCount % 3];
+                        sfx.playStrike(false);
+                    } else if (this.state === 'heavy') {
+                        dmg = 88 * this.powerMultiplier;
+                        moveLabel = Math.abs(this.vx) > 250 ? 'FLYING CLOTHESLINE!' : 'BIG BOOT!';
+                        sfx.playStrike(true);
+                    } else if (this.state === 'grapple') {
+                        dmg = 135 * (this.star.stats.grapple / 90);
+                        moveLabel = 'SUPLEX SLAM!';
+                        sfx.playSlam();
+                    } else if (this.state === 'finisher') {
+                        dmg = 275 * this.powerMultiplier;
+                        moveLabel = `${this.star.finisherName.toUpperCase()}!!`;
+                        this.momentum = 0;
+                        sfx.playSlam();
+                        flashAlpha = 0.75;
+                    }
+
+                    if (isBlocked) {
+                        dmg *= 0.22;
+                        opponent.vx = this.facing * 180;
+                        spawnParticles((this.x + opponent.x) / 2, this.y - 115, '#38bdf8', 8);
+                        spawnFloatingText(opponent.x, opponent.y - 155, 'BLOCKED', '#94a3b8');
+                    } else {
+                        opponent.health = Math.max(0, opponent.health - dmg);
+                        this.comboCount++;
+                        this.comboResetTimer = 2.6;
+                        updateComboHUD();
+
+                        // Build Finisher Momentum
+                        this.momentum = Math.min(100, this.momentum + (this.state === 'grapple' ? 28 : 16));
+                        opponent.momentum = Math.min(100, opponent.momentum + 7);
+
+                        // Impact sweat & spark particles
+                        const impactX = (this.x + opponent.x) * 0.5;
+                        const impactY = this.y - 125;
+                        spawnParticles(impactX, impactY, this.state === 'finisher' ? '#f59e0b' : '#f8fafc', this.state === 'finisher' ? 28 : 14);
+                        spawnFloatingText(opponent.x, opponent.y - 175, `${moveLabel} -${Math.round(dmg)}`, this.state === 'finisher' ? '#fbbf24' : '#f43f5e');
+
+                        // Hit-Stop & Camera Shake on Heavy/Grapple/Finisher
+                        if (this.state === 'finisher') {
+                            hitStopTimer = 0.14;
+                            triggerCameraShake(22);
+                            opponent.startAction('knockdown', 2.4);
+                            opponent.vx = this.facing * 320;
+                            opponent.vy = -360;
+                            opponent.expression = 'pain';
+                            showActionBanner(`⚡ ${this.star.name}: ${this.star.finisherName}!`);
+                            setCommentary(`BAH GAWD! ${this.star.name} connects with the ${this.star.finisherName}! Go for the pin!`);
+                        } else if (this.state === 'grapple' || this.state === 'heavy') {
+                            hitStopTimer = 0.07;
+                            triggerCameraShake(12);
+                            opponent.startAction('knockdown', 1.35);
+                            opponent.vx = this.facing * 260;
+                            opponent.vy = -260;
+                            opponent.expression = 'pain';
+                            showActionBanner(moveLabel);
+                            setCommentary(`Crushing ${moveLabel} by ${this.star.name}!`);
+                        } else {
+                            hitStopTimer = 0.03;
+                            triggerCameraShake(4);
+                            opponent.startAction('hitstun', 0.36);
+                            opponent.vx = this.facing * 130;
+                            opponent.expression = 'pain';
+                        }
+                    }
+                }
+            }
+
+            /* ============================================================================
+               PROCEDURAL MUSCULAR SKELETAL ARTICULATION & RENDERING
+               ============================================================================ */
+            draw(ctx) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                const p = this.stateDuration > 0 ? Math.min(1, this.stateTimer / this.stateDuration) : 0;
+                const swing = Math.sin(p * Math.PI);
+                const breath = Math.sin(this.animPhase) * 2.5;
+
+                // Compute Skeletal Pose Angles (Degrees converted to Radians)
+                let torsoY = -102 + breath;
+                let torsoLean = 0;
+                let headTilt = 0;
+                let lThigh = -12, lShin = 16;
+                let rThigh = 16, rShin = 8;
+                let lShoulder = 22, lElbow = -45;
+                let rShoulder = -18, rElbow = -55;
+
+                if (this.state === 'walk') {
+                    const w = Math.sin(this.animPhase * 2.1);
+                    lThigh = w * 28; lShin = Math.max(5, -w * 25);
+                    rThigh = -w * 28; rShin = Math.max(5, w * 25);
+                    lShoulder = -w * 22; rShoulder = w * 22;
+                    torsoY = -102 + Math.abs(w) * 4;
+                } else if (this.state === 'run') {
+                    const r = Math.sin(this.animPhase * 3.4);
+                    torsoLean = 0.28;
+                    lThigh = r * 46; lShin = 35;
+                    rThigh = -r * 46; rShin = 35;
+                    lShoulder = -r * 45; rShoulder = r * 45;
+                    torsoY = -98 + Math.abs(r) * 6;
+                } else if (this.state === 'block') {
+                    torsoLean = -0.08;
+                    torsoY = -94;
+                    lShoulder = -55; lElbow = -95;
+                    rShoulder = -65; rElbow = -95;
+                    this.expression = 'determined';
+                } else if (this.state === 'dodge') {
+                    torsoLean = 0.55;
+                    torsoY = -75;
+                } else if (this.state === 'light') {
+                    torsoLean = 0.18 * swing;
+                    rShoulder = -15 - 82 * swing;
+                    rElbow = -50 + 48 * swing;
+                    this.expression = 'roar';
+                } else if (this.state === 'heavy') {
+                    torsoLean = -0.25 * swing;
+                    rThigh = -85 * swing;
+                    rShin = 10 * (1 - swing);
+                    rShoulder = -45 * swing;
+                    this.expression = 'roar';
+                } else if (this.state === 'grapple') {
+                    torsoLean = -0.38 * swing;
+                    torsoY = -105 - 16 * swing;
+                    lShoulder = -115 * swing; lElbow = -30;
+                    rShoulder = -125 * swing; rElbow = -30;
+                    this.expression = 'roar';
+                } else if (this.state === 'finisher') {
+                    torsoLean = 0.48 * swing;
+                    torsoY = -95 - 22 * swing;
+                    lShoulder = -95 * swing; lElbow = -15;
+                    rShoulder = -105 * swing; rElbow = -10;
+                    rThigh = 35 * swing;
+                    this.expression = 'roar';
+                } else if (this.state === 'hitstun') {
+                    torsoLean = -0.35;
+                    headTilt = -0.3;
+                    lShoulder = 35; rShoulder = 40;
+                    this.expression = 'pain';
+                } else if (this.state === 'knockdown') {
+                    // Laying flat on the mat
+                    torsoLean = -1.42;
+                    torsoY = -28;
+                    lThigh = 10; lShin = 15;
+                    rThigh = -5; rShin = 20;
+                    lShoulder = -30; rShoulder = 25;
+                    this.expression = 'pain';
+                } else if (this.state === 'pinning') {
+                    torsoLean = 0.85;
+                    torsoY = -48;
+                    lThigh = -45; lShin = 85;
+                    rThigh = 30; rShin = 65;
+                }
+
+                // Ground Shadow under Wrestler
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+                ctx.beginPath();
+                ctx.ellipse(0, 2, this.state === 'knockdown' ? 68 : 42, 11, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Flip coordinate system by facing direction
+                ctx.scale(this.facing, this.star.bodyScale.height);
+
+                // Finisher Aura Glow
+                if (this.momentum >= 100 || this.state === 'finisher') {
+                    ctx.save();
+                    ctx.strokeStyle = this.isP1 ? 'rgba(245, 158, 11, 0.55)' : 'rgba(56, 189, 248, 0.55)';
+                    ctx.lineWidth = 6;
+                    ctx.beginPath();
+                    ctx.ellipse(0, torsoY + 25, 48, 72, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Helper to draw a muscular sculpted limb segment
+                const drawLimb = (x1, y1, length, angleDeg, topW, botW, color1, color2) => {
+                    ctx.save();
+                    ctx.translate(x1, y1);
+                    ctx.rotate((angleDeg * Math.PI) / 180);
+
+                    const grad = ctx.createLinearGradient(-topW, 0, topW, 0);
+                    grad.addColorStop(0, color2);
+                    grad.addColorStop(0.45, color1);
+                    grad.addColorStop(1, color2);
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.moveTo(-topW, 0);
+                    ctx.quadraticCurveTo(-topW * 1.15, length * 0.45, -botW, length);
+                    ctx.lineTo(botW, length);
+                    ctx.quadraticCurveTo(topW * 1.15, length * 0.45, topW, 0);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    const endX = x1 - Math.sin((angleDeg * Math.PI) / 180) * length;
+                    const endY = y1 + Math.cos((angleDeg * Math.PI) / 180) * length;
+                    ctx.restore();
+                    return { x: endX, y: endY };
+                };
+
+                const hipY = torsoY + 42;
+                const thighColor1 = this.star.attire.pants ? this.star.attire.pantsColor : this.star.skinBase;
+                const thighColor2 = this.star.attire.pants ? '#09090b' : this.star.skinShadow;
+
+                // 1. BACK LEG (Left)
+                const lKnee = drawLimb(-8, hipY, 34, lThigh, 11.5, 8.5, thighColor1, thighColor2);
+                const lAnkle = drawLimb(lKnee.x, lKnee.y, 32, lThigh + lShin, 8.5, 6, this.star.attire.bootColor, '#000000');
+                // Back Boot
+                ctx.fillStyle = this.star.attire.bootColor;
+                ctx.beginPath();
+                ctx.ellipse(lAnkle.x + 5, lAnkle.y, 11, 5.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 2. BACK ARM (Left)
+                ctx.save();
+                ctx.translate(0, torsoY);
+                ctx.rotate(torsoLean);
+                const lElbowPos = drawLimb(-12, -22, 27, lShoulder, 9.5, 7.5, this.star.skinBase, this.star.skinShadow);
+                const lWristPos = drawLimb(lElbowPos.x, lElbowPos.y, 25, lShoulder + lElbow, 7.5, 5.5, this.star.skinBase, this.star.skinShadow);
+                // Left glove/fist
+                ctx.fillStyle = this.star.attire.leftWristband || this.star.skinShadow;
+                ctx.beginPath();
+                ctx.arc(lWristPos.x, lWristPos.y, 6.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                // 3. FRONT LEG (Right)
+                const rKnee = drawLimb(8, hipY, 34, rThigh, 12, 9, thighColor1, thighColor2);
+                // Knee pad if trunks
+                if (!this.star.attire.pants) {
+                    ctx.fillStyle = this.star.attire.kneePadColor || '#111115';
+                    ctx.beginPath();
+                    ctx.arc(rKnee.x, rKnee.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                const rAnkle = drawLimb(rKnee.x, rKnee.y, 32, rThigh + rShin, 9, 6.5, this.star.attire.bootColor, '#09090b');
+                // Front Boot with trim
+                ctx.fillStyle = this.star.attire.bootColor;
+                ctx.beginPath();
+                ctx.ellipse(rAnkle.x + 6, rAnkle.y, 12, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = this.star.attire.trimColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 4. SCULPTED MUSCULAR TORSO & TRUNKS
+                ctx.save();
+                ctx.translate(0, torsoY);
+                ctx.rotate(torsoLean);
+
+                // Trunks / Waistband
+                ctx.fillStyle = this.star.attire.trunkColor;
+                ctx.beginPath();
+                ctx.moveTo(-19, 24);
+                ctx.lineTo(19, 24);
+                ctx.lineTo(17, 45);
+                ctx.lineTo(-17, 45);
+                ctx.closePath();
+                ctx.fill();
+
+                // Championship Belt Trim on Waistband
+                ctx.fillStyle = this.star.attire.trimColor;
+                ctx.fillRect(-19, 23, 38, 4.5);
+
+                // V-Taper Muscular Torso
+                const sw = 24 * this.star.bodyScale.shoulder;
+                const torsoGrad = ctx.createLinearGradient(-sw, -28, sw, 24);
+                torsoGrad.addColorStop(0, this.star.skinShadow);
+                torsoGrad.addColorStop(0.5, this.star.skinHighlight);
+                torsoGrad.addColorStop(1, this.star.skinShadow);
+
+                ctx.fillStyle = this.star.attire.singlet ? '#111115' : torsoGrad;
+                ctx.beginPath();
+                ctx.moveTo(-sw, -26);
+                ctx.lineTo(sw, -26);
+                ctx.quadraticCurveTo(sw * 0.85, 2, 18, 25);
+                ctx.lineTo(-18, 25);
+                ctx.quadraticCurveTo(-sw * 0.85, 2, -sw, -26);
+                ctx.closePath();
+                ctx.fill();
+
+                // Six-Pack Abdominal & Pectoral Shading Lines
+                if (!this.star.attire.singlet) {
+                    ctx.strokeStyle = this.star.skinShadow;
+                    ctx.lineWidth = 1.5;
+                    // Pec line
+                    ctx.beginPath();
+                    ctx.moveTo(-17, -8);
+                    ctx.quadraticCurveTo(-8, -2, 0, -6);
+                    ctx.quadraticCurveTo(8, -2, 17, -8);
+                    ctx.stroke();
+                    // Abs grid
+                    ctx.beginPath();
+                    ctx.moveTo(2, -5);
+                    ctx.lineTo(2, 21);
+                    ctx.moveTo(-7, 3); ctx.lineTo(10, 3);
+                    ctx.moveTo(-6, 11); ctx.lineTo(9, 11);
+                    ctx.stroke();
+
+                    // Chest Tattoo on In-Ring Model
+                    if (this.star.attire.chestTattoo === 'chest_sword') {
+                        ctx.fillStyle = 'rgba(20,20,25,0.6)';
+                        ctx.fillRect(-2, -16, 4, 28);
+                    }
+                }
+
+                // 5. DETAILED REALISTIC HEAD ON NECK JOINT
+                drawRealisticHead(ctx, this.star, 2, -42, 0.96, 1, this.expression, this.animPhase);
+
+                // 6. FRONT ARM (Right) WITH GAUNTLET / ELBOW PAD
+                const rElbowPos = drawLimb(11, -21, 27, rShoulder, 10.5, 8, this.star.skinHighlight, this.star.skinShadow);
+                if (this.star.attire.elbowPadRight) {
+                    ctx.fillStyle = this.star.attire.elbowPadRight;
+                    ctx.beginPath();
+                    ctx.arc(rElbowPos.x, rElbowPos.y, 7.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                const forearmColor = this.star.attire.rightGauntlet || this.star.skinBase;
+                const rWristPos = drawLimb(rElbowPos.x, rElbowPos.y, 26, rShoulder + rElbow, 8, 6, forearmColor, this.star.skinShadow);
+                // Right Fist
+                ctx.fillStyle = this.star.attire.rightGauntlet || '#18181b';
+                ctx.beginPath();
+                ctx.arc(rWristPos.x, rWristPos.y, 7.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+                ctx.restore();
+            }
+        }
+
+        /* ============================================================================
+           7. ARENA ENVIRONMENT, DYNAMIC ROPES & CROWD RENDERER
+           ============================================================================ */
+        function updateRopePhysics(dt) {
+            // Spring Hooke's law for left & right ropes
+            const springK = 140;
+            const damping = 8.5;
+
+            ropePhysics.leftVel += (-springK * ropePhysics.leftDeflection - damping * ropePhysics.leftVel) * dt;
+            ropePhysics.leftDeflection += ropePhysics.leftVel * dt;
+
+            ropePhysics.rightVel += (-springK * ropePhysics.rightDeflection - damping * ropePhysics.rightVel) * dt;
+            ropePhysics.rightDeflection += ropePhysics.rightVel * dt;
+        }
+
+        function drawArenaAndRing(ctx, timeSec) {
+            // 1. Deep Arena Ceiling & Spotlight Beams
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, V_HEIGHT);
+            bgGrad.addColorStop(0, '#04050a');
+            bgGrad.addColorStop(0.55, '#111322');
+            bgGrad.addColorStop(1, '#07080d');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+
+            // Dynamic Moving Arena Spotlights
+            ctx.save();
+            for (let i = 0; i < 4; i++) {
+                const beamX = 220 + i * 280 + Math.sin(timeSec * 0.9 + i) * 65;
+                const beamGrad = ctx.createLinearGradient(beamX, 0, beamX, RING_FLOOR_Y);
+                beamGrad.addColorStop(0, i % 2 === 0 ? 'rgba(225, 29, 72, 0.16)' : 'rgba(37, 99, 235, 0.16)');
+                beamGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = beamGrad;
+                ctx.beginPath();
+                ctx.moveTo(beamX - 35, 0);
+                ctx.lineTo(beamX + 35, 0);
+                ctx.lineTo(beamX + 190, RING_FLOOR_Y);
+                ctx.lineTo(beamX - 190, RING_FLOOR_Y);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // 2. Animated Arena Crowd Silhouette & Signs
+            crowdMembers.forEach(c => {
+                const bounce = Math.sin(timeSec * c.speed + c.phase) * 5;
+                ctx.fillStyle = '#181824';
+                ctx.beginPath();
+                ctx.arc(c.x, c.y + bounce, 11, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = c.shirtColor;
+                ctx.fillRect(c.x - 13, c.y + 10 + bounce, 26, 22);
+
+                if (c.hasSign) {
+                    ctx.save();
+                    ctx.translate(c.x + 12, c.y - 18 + bounce * 1.4);
+                    ctx.rotate(Math.sin(timeSec * 2 + c.phase) * 0.08);
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(-32, -12, 64, 20);
+                    ctx.fillStyle = '#09090b';
+                    ctx.font = 'bold 7px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(c.signText, 0, 1);
+                    ctx.restore();
+                }
+            });
+
+            // Camera Flashbulbs in Crowd
+            if (Math.random() < 0.12) {
+                const fx = 100 + Math.random() * (V_WIDTH - 200);
+                const fy = 110 + Math.random() * 190;
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.beginPath();
+                ctx.arc(fx, fy, 14, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 3. LED Ring Apron & Perspective Canvas Mat
+            const matTopY = RING_FLOOR_Y - 52;
+            const matBottomY = RING_FLOOR_Y + 34;
+
+            // Mat Canvas Surface
+            const matGrad = ctx.createLinearGradient(0, matTopY, 0, matBottomY);
+            matGrad.addColorStop(0, '#cbd5e1');
+            matGrad.addColorStop(0.5, '#f1f5f9');
+            matGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = matGrad;
+            ctx.beginPath();
+            ctx.moveTo(RING_LEFT_X - 35, matTopY);
+            ctx.lineTo(RING_RIGHT_X + 35, matTopY);
+            ctx.lineTo(RING_RIGHT_X + 95, matBottomY);
+            ctx.lineTo(RING_LEFT_X - 95, matBottomY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Center Ring Logo
+            ctx.save();
+            ctx.translate(V_WIDTH * 0.5, RING_FLOOR_Y - 12);
+            ctx.scale(1, 0.28);
+            ctx.strokeStyle = 'rgba(225, 29, 72, 0.45)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(0, 0, 110, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+            ctx.font = '900 54px Teko, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('WWE MAIN EVENT', 0, 18);
+            ctx.restore();
+
+            // Ring Apron Skirt & LED Board
+            ctx.fillStyle = '#09090b';
+            ctx.fillRect(RING_LEFT_X - 95, matBottomY, (RING_RIGHT_X - RING_LEFT_X) + 190, 95);
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(RING_LEFT_X - 85, matBottomY + 8, (RING_RIGHT_X - RING_LEFT_X) + 170, 52);
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 28px Teko, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('WRESTLEMANIA CHAMPIONSHIP SHOWDOWN • LIVE BROADCAST', V_WIDTH * 0.5, matBottomY + 42);
+
+            // 4. Steel Corner Posts
+            const postLeftX = RING_LEFT_X - 55;
+            const postRightX = RING_RIGHT_X + 55;
+            const postTopY = RING_FLOOR_Y - 215;
+
+            const drawPost = (px) => {
+                const pGrad = ctx.createLinearGradient(px - 12, 0, px + 12, 0);
+                pGrad.addColorStop(0, '#334155');
+                pGrad.addColorStop(0.5, '#94a3b8');
+                pGrad.addColorStop(1, '#1e293b');
+                ctx.fillStyle = pGrad;
+                ctx.fillRect(px - 11, postTopY, 22, 255);
+            };
+            drawPost(postLeftX);
+            drawPost(postRightX);
+
+            // 5. Dynamic Elastic Ring Ropes (Top Red, Middle White, Bottom Blue)
+            const ropeHeights = [RING_FLOOR_Y - 175, RING_FLOOR_Y - 122, RING_FLOOR_Y - 68];
+            const ropeColors = ['#e11d48', '#f8fafc', '#2563eb'];
+
+            ropeHeights.forEach((ry, idx) => {
+                // Horizontal Back Ropes
+                ctx.strokeStyle = ropeColors[idx];
+                ctx.lineWidth = 5.5;
+                ctx.beginPath();
+                ctx.moveTo(postLeftX + ropePhysics.leftDeflection, ry);
+                ctx.lineTo(postRightX + ropePhysics.rightDeflection, ry);
+                ctx.stroke();
+
+                // Turnbuckle Pads
+                ctx.fillStyle = '#18181b';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 2;
+                ctx.fillRect(postLeftX - 4, ry - 9, 26, 18);
+                ctx.strokeRect(postLeftX - 4, ry - 9, 26, 18);
+                ctx.fillRect(postRightX - 22, ry - 9, 26, 18);
+                ctx.strokeRect(postRightX - 22, ry - 9, 26, 18);
+            });
+
+            // Side Ropes that flex outward when leaned against
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(postLeftX, ropeHeights[0]);
+            ctx.quadraticCurveTo(postLeftX + ropePhysics.leftDeflection * 2.4, ropeHeights[1], postLeftX, ropeHeights[2]);
+            ctx.moveTo(postRightX, ropeHeights[0]);
+            ctx.quadraticCurveTo(postRightX + ropePhysics.rightDeflection * 2.4, ropeHeights[1], postRightX, ropeHeights[2]);
+            ctx.stroke();
+        }
+
+        /* ============================================================================
+           8. CONTROLS, AI BRAIN & PINFALL REFEREE MECHANIC
+           ============================================================================ */
+        const keys = {};
+        let p1Fighter = null;
+        let p2Fighter = null;
+
+        // Pinfall State
+        let pinState = {
+            active: false,
+            pinner: null,
+            pinned: null,
+            count: 0,
+            timer: 0,
+            escapeProgress: 0,
+            escapeTarget: 100
+        };
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (!gameActive) return;
+
+            // Kickout mashing during pinfall
+            if (pinState.active && !pinState.pinned.isAI) {
+                if (['KeyJ', 'KeyK', 'Space', 'ArrowUp', 'Numpad1'].includes(e.code)) {
+                    registerKickoutMash();
+                }
+            }
+
+            // Player 1 Attack Triggers
+            if (p1Fighter && ['idle', 'walk', 'run'].includes(p1Fighter.state)) {
+                if (e.code === 'KeyJ') p1Fighter.startAction('light', 0.34, 8);
+                else if (e.code === 'KeyK') p1Fighter.startAction('heavy', 0.54, 16);
+                else if (e.code === 'KeyU') p1Fighter.startAction('grapple', 0.68, 22);
+                else if (e.code === 'KeyL') {
+                    p1Fighter.startAction('dodge', 0.38, 14);
+                    p1Fighter.vx = p1Fighter.facing * 420;
+                } else if (e.code === 'KeyI') {
+                    tryInitiatePinfall(p1Fighter, p2Fighter);
+                } else if (e.code === 'Space' && p1Fighter.momentum >= 100) {
+                    e.preventDefault();
+                    p1Fighter.startAction('finisher', 0.85, 0);
+                }
+            }
+
+            // Player 2 Local Controls (when in P1 vs P2 mode)
+            if (p2Fighter && !p2Fighter.isAI && ['idle', 'walk', 'run'].includes(p2Fighter.state)) {
+                if (e.code === 'Numpad1' || e.code === 'KeyN') p2Fighter.startAction('light', 0.34, 8);
+                else if (e.code === 'Numpad2' || e.code === 'KeyM') p2Fighter.startAction('heavy', 0.54, 16);
+                else if (e.code === 'Numpad3' || e.code === 'Comma') p2Fighter.startAction('grapple', 0.68, 22);
+                else if (e.code === 'Numpad0' || e.code === 'Period') tryInitiatePinfall(p2Fighter, p1Fighter);
+                else if (e.code === 'Enter' && p2Fighter.momentum >= 100) {
+                    e.preventDefault();
+                    p2Fighter.startAction('finisher', 0.85, 0);
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        function handleContinuousInput(dt) {
+            if (!p1Fighter || !p2Fighter || pinState.active) return;
+
+            // Player 1 Movement
+            if (['idle', 'walk', 'run', 'block'].includes(p1Fighter.state)) {
+                if (keys['KeyS']) {
+                    p1Fighter.state = 'block';
+                    p1Fighter.vx = 0;
+                } else {
+                    const sprint = keys['ShiftLeft'] || keys['ShiftRight'] || keys['touch_sprint'];
+                    const baseSpeed = (sprint ? 430 : 250) * p1Fighter.speedMultiplier;
+
+                    if (keys['KeyA'] || keys['touch_left']) {
+                        p1Fighter.vx = -baseSpeed;
+                        p1Fighter.state = sprint ? 'run' : 'walk';
+                        if (sprint) p1Fighter.facing = -1;
+                    } else if (keys['KeyD'] || keys['touch_right']) {
+                        p1Fighter.vx = baseSpeed;
+                        p1Fighter.state = sprint ? 'run' : 'walk';
+                        if (sprint) p1Fighter.facing = 1;
+                    } else if (p1Fighter.state === 'walk' || p1Fighter.state === 'block' || p1Fighter.state === 'run') {
+                        p1Fighter.state = 'idle';
+                    }
+
+                    if (keys['KeyW'] && p1Fighter.y >= RING_FLOOR_Y) {
+                        p1Fighter.vy = -640;
+                        p1Fighter.state = 'jump';
+                    }
+                }
+            }
+
+            // Player 2 Movement (Local PvP or AI Controller)
+            if (!p2Fighter.isAI) {
+                if (['idle', 'walk', 'run', 'block'].includes(p2Fighter.state)) {
+                    if (keys['ArrowDown']) {
+                        p2Fighter.state = 'block';
+                        p2Fighter.vx = 0;
+                    } else {
+                        const baseSpeed = 260 * p2Fighter.speedMultiplier;
+                        if (keys['ArrowLeft']) {
+                            p2Fighter.vx = -baseSpeed;
+                            p2Fighter.state = 'walk';
+                        } else if (keys['ArrowRight']) {
+                            p2Fighter.vx = baseSpeed;
+                            p2Fighter.state = 'walk';
+                        } else if (p2Fighter.state === 'walk' || p2Fighter.state === 'block') {
+                            p2Fighter.state = 'idle';
+                        }
+                        if (keys['ArrowUp'] && p2Fighter.y >= RING_FLOOR_Y) {
+                            p2Fighter.vy = -640;
+                            p2Fighter.state = 'jump';
+                        }
+                    }
+                }
+            } else {
+                updateAICombatBrain(p2Fighter, p1Fighter, dt);
+            }
+        }
+
+        function updateAICombatBrain(ai, target, dt) {
+            if (!['idle', 'walk', 'run', 'block'].includes(ai.state)) return;
+
+            ai.aiDecisionTimer -= dt;
+            const dist = Math.abs(target.x - ai.x);
+            const dir = target.x >= ai.x ? 1 : -1;
+
+            const diff = document.getElementById('aiDifficultySelect').value;
+            const aggro = diff === 'legend' ? 0.92 : (diff === 'hard' ? 0.75 : 0.52);
+
+            // Attempt Pinfall if opponent is knocked down with low health
+            if (target.state === 'knockdown' && target.health < 260 && dist < 125) {
+                tryInitiatePinfall(ai, target);
+                return;
+            }
+
+            // Approach target if far
+            if (dist > 118) {
+                const shouldRun = dist > 340 && ai.stamina > 45;
+                ai.vx = dir * (shouldRun ? 390 : 235) * ai.speedMultiplier;
+                ai.state = shouldRun ? 'run' : 'walk';
+                return;
+            }
+
+            if (ai.aiDecisionTimer > 0) return;
+            ai.aiDecisionTimer = diff === 'legend' ? 0.24 : (diff === 'hard' ? 0.38 : 0.58);
+
+            // Close-quarters AI Combat Decisions
+            if (ai.momentum >= 100 && Math.random() < aggro) {
+                ai.startAction('finisher', 0.85, 0);
+            } else if (['light', 'heavy'].includes(target.state) && Math.random() < aggro * 0.65) {
+                ai.state = 'block';
+                ai.stateDuration = 0.45;
+                ai.stateTimer = 0;
+            } else {
+                const roll = Math.random();
+                if (roll < 0.42) ai.startAction('light', 0.34, 8);
+                else if (roll < 0.74) ai.startAction('heavy', 0.54, 16);
+                else ai.startAction('grapple', 0.68, 22);
+            }
+        }
+
+        /* ============================================================================
+           9. PINFALL & 1-2-3 REFEREE COUNTDOWN SYSTEM
+           ============================================================================ */
+        function tryInitiatePinfall(pinner, target) {
+            if (pinState.active) return;
+            const dist = Math.abs(pinner.x - target.x);
+            if (dist > 135) {
+                spawnFloatingText(pinner.x, pinner.y - 150, 'TOO FAR TO PIN!', '#94a3b8');
+                return;
+            }
+            if (target.state !== 'knockdown' && target.health > 320) {
+                spawnFloatingText(pinner.x, pinner.y - 150, 'KNOCK DOWN OPPONENT FIRST!', '#f59e0b');
+                return;
+            }
+
+            target.startAction('knockdown', 10);
+            pinner.x = target.x - pinner.facing * 25;
+            pinner.startAction('pinning', 10);
+
+            pinState.active = true;
+            pinState.pinner = pinner;
+            pinState.pinned = target;
+            pinState.count = 1;
+            pinState.timer = 0;
+            pinState.escapeProgress = 0;
+            // Lower health requires more mash effort to kick out
+            const healthFactor = Math.max(0.05, target.health / target.maxHealth);
+            pinState.escapeTarget = 100 * (1.35 - healthFactor * 0.9);
+
+            document.getElementById('pinfallOverlay').classList.remove('hidden');
+            document.getElementById('pinCountNumber').textContent = '1';
+            sfx.playSlam();
+            setCommentary(`COVER BY ${pinner.star.name}! REFEREE IS IN POSITION! ONE!!`);
+        }
+
+        function registerKickoutMash() {
+            if (!pinState.active) return;
+            pinState.escapeProgress += 18;
+            spawnParticles(pinState.pinned.x, pinState.pinned.y - 45, '#38bdf8', 5);
+            if (pinState.escapeProgress >= pinState.escapeTarget) {
+                completeKickout();
+            }
+        }
+
+        function completeKickout() {
+            const pinned = pinState.pinned;
+            const pinner = pinState.pinner;
+            pinState.active = false;
+            document.getElementById('pinfallOverlay').classList.add('hidden');
+
+            pinned.state = 'idle';
+            pinned.stateDuration = 0;
+            pinned.health = Math.max(pinned.health, 120); // Second-wind adrenaline
+            pinner.state = 'hitstun';
+            pinner.stateDuration = 0.5;
+            pinner.vx = -pinner.facing * 240;
+
+            triggerCameraShake(14);
+            showActionBanner(`🔥 KICKOUT AT ${pinState.count}!!`);
+            setCommentary(`UNBELIEVABLE! ${pinned.star.name} KICKS OUT AT ${pinState.count}! THIS MATCH CONTINUES!`);
+        }
+
+        function updatePinfallLogic(dt) {
+            if (!pinState.active) return;
+
+            // AI Kickout simulation
+            if (pinState.pinned.isAI) {
+                const hpRatio = pinState.pinned.health / pinState.pinned.maxHealth;
+                const kickRate = hpRatio > 0.25 ? 62 : (hpRatio > 0.08 ? 36 : 16);
+                pinState.escapeProgress += kickRate * dt;
+                if (pinState.escapeProgress >= pinState.escapeTarget) {
+                    completeKickout();
+                    return;
+                }
+            }
+
+            pinState.timer += dt;
+            if (pinState.timer >= 1.05) {
+                pinState.timer = 0;
+                pinState.count++;
+                document.getElementById('pinCountNumber').textContent = pinState.count;
+                sfx.playSlam();
+
+                if (pinState.count === 2) {
+                    setCommentary(`TWO!! SO CLOSE!`);
+                } else if (pinState.count >= 3) {
+                    // 3-COUNT VICTORY!
+                    pinState.active = false;
+                    document.getElementById('pinfallOverlay').classList.add('hidden');
+                    declareMatchWinner(pinState.pinner, `Victory by Referee 3-Count Pinfall after ${pinState.pinner.star.finisherName}!`);
+                }
+            }
+        }
+
+        function declareMatchWinner(winner, subtitle) {
+            gameActive = false;
+            sfx.playBell();
+            setTimeout(() => sfx.playBell(), 350);
+            setTimeout(() => sfx.playBell(), 700);
+
+            document.getElementById('winnerNameTitle').textContent = winner.star.name;
+            document.getElementById('winnerMethodSubtitle').textContent = subtitle;
+            renderSuperstarPortrait(document.getElementById('winnerPortraitCanvas'), winner.star, 'roar', false);
+            document.getElementById('victoryModal').classList.remove('hidden');
+        }
+
+        /* ============================================================================
+           10. VISUAL EFFECTS, HUD UPDATES & MAIN 60FPS GAME LOOP
+           ============================================================================ */
+        function spawnParticles(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 80 + Math.random() * 280;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 90,
+                    radius: 2 + Math.random() * 4.5,
+                    color,
+                    alpha: 1
+                });
+            }
+        }
+
+        function spawnFloatingText(x, y, text, color = '#ffffff') {
+            floatingTexts.push({ x, y, text, color, alpha: 1, vy: -65 });
+        }
+
+        function triggerCameraShake(intensity) {
+            cameraShake.intensity = Math.max(cameraShake.intensity, intensity);
+        }
+
+        let bannerTimeout = null;
+        function showActionBanner(text) {
+            const el = document.getElementById('actionBanner');
+            el.textContent = text;
+            el.classList.remove('hidden');
+            clearTimeout(bannerTimeout);
+            bannerTimeout = setTimeout(() => el.classList.add('hidden'), 1800);
+        }
+
+        function setCommentary(text) {
+            const el = document.getElementById('commentaryText');
+            if (el) el.textContent = `"${text}"`;
+        }
+
+        function updateComboHUD() {
+            if (!p1Fighter || !p2Fighter) return;
+            const c1 = document.getElementById('hudP1Combo');
+            const c2 = document.getElementById('hudP2Combo');
+            if (p1Fighter.comboCount >= 2) {
+                c1.textContent = `${p1Fighter.comboCount}x COMBO`;
+                c1.classList.remove('hidden');
+            } else {
+                c1.classList.add('hidden');
+            }
+            if (p2Fighter.comboCount >= 2) {
+                c2.textContent = `${p2Fighter.comboCount}x COMBO`;
+                c2.classList.remove('hidden');
+            } else {
+                c2.classList.add('hidden');
+            }
+        }
+
+        function updateBroadcastHUD() {
+            if (!p1Fighter || !p2Fighter) return;
+
+            const p1HpPct = Math.max(0, (p1Fighter.health / p1Fighter.maxHealth) * 100);
+            const p1TrailPct = Math.max(0, (p1Fighter.damageTrail / p1Fighter.maxHealth) * 100);
+            document.getElementById('hudP1Health').style.width = `${p1HpPct}%`;
+            document.getElementById('hudP1DamageTrail').style.width = `${p1TrailPct}%`;
+            document.getElementById('hudP1Stamina').style.width = `${p1Fighter.stamina}%`;
+            document.getElementById('hudP1StamText').textContent = `${Math.round(p1Fighter.stamina)}%`;
+            document.getElementById('hudP1Finisher').style.width = `${p1Fighter.momentum}%`;
+            document.getElementById('hudP1FinText').textContent = `${Math.round(p1Fighter.momentum)}%`;
+
+            const p1FinBanner = document.getElementById('hudP1FinisherReady');
+            if (p1Fighter.momentum >= 100) p1FinBanner.classList.remove('hidden');
+            else p1FinBanner.classList.add('hidden');
+
+            const p2HpPct = Math.max(0, (p2Fighter.health / p2Fighter.maxHealth) * 100);
+            const p2TrailPct = Math.max(0, (p2Fighter.damageTrail / p2Fighter.maxHealth) * 100);
+            document.getElementById('hudP2Health').style.width = `${p2HpPct}%`;
+            document.getElementById('hudP2DamageTrail').style.width = `${p2TrailPct}%`;
+            document.getElementById('hudP2Stamina').style.width = `${p2Fighter.stamina}%`;
+            document.getElementById('hudP2StamText').textContent = `${Math.round(p2Fighter.stamina)}%`;
+            document.getElementById('hudP2Finisher').style.width = `${p2Fighter.momentum}%`;
+            document.getElementById('hudP2FinText').textContent = `${Math.round(p2Fighter.momentum)}%`;
+
+            const p2FinBanner = document.getElementById('hudP2FinisherReady');
+            if (p2Fighter.momentum >= 100 && !p2Fighter.isAI) p2FinBanner.classList.remove('hidden');
+            else p2FinBanner.classList.add('hidden');
+
+            // Format Match Clock
+            const mins = String(Math.floor(matchTimeSeconds / 60)).padStart(2, '0');
+            const secs = String(Math.floor(matchTimeSeconds % 60)).padStart(2, '0');
+            document.getElementById('matchTimerDisplay').textContent = `${mins}:${secs}`;
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            if (!container) return;
+            canvas.width = container.clientWidth || window.innerWidth;
+            canvas.height = container.clientHeight || window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function startMainEventMatch() {
+            sfx.init();
+            sfx.playBell();
+
+            const star1 = SUPERSTARS[selectedP1Index];
+            const star2 = SUPERSTARS[selectedP2Index];
+
+            p1Fighter = new Wrestler(star1, true, false);
+            p2Fighter = new Wrestler(star2, false, matchMode === 'cpu');
+
+            document.getElementById('hudP1Name').textContent = star1.name;
+            document.getElementById('hudP2Name').textContent = star2.name;
+            renderSuperstarPortrait(document.getElementById('hudP1Face'), star1, 'determined', true);
+            renderSuperstarPortrait(document.getElementById('hudP2Face'), star2, 'determined', true);
+
+            document.getElementById('selectionScreen').classList.add('hidden');
+            document.getElementById('arenaScreen').classList.remove('hidden');
+            document.getElementById('btnBackToRoster').classList.remove('hidden');
+            document.getElementById('victoryModal').classList.add('hidden');
+            document.getElementById('pinfallOverlay').classList.add('hidden');
+
+            pinState.active = false;
+            matchTimeSeconds = 0;
+            particles = [];
+            floatingTexts = [];
+            gameActive = true;
+
+            resizeCanvas();
+            showActionBanner('🔔 BELL RINGS! FIGHT!');
+            setCommentary(`${star1.name} vs ${star2.name}! The Undisputed Championship Main Event is underway!`);
+        }
+
+        function mainGameLoop(now) {
+            const rawDt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            if (gameActive && p1Fighter && p2Fighter) {
+                if (hitStopTimer > 0) {
+                    hitStopTimer -= rawDt;
+                } else {
+                    matchTimeSeconds += rawDt;
+                    handleContinuousInput(rawDt);
+                    p1Fighter.update(rawDt, p2Fighter);
+                    p2Fighter.update(rawDt, p1Fighter);
+                    updateRopePhysics(rawDt);
+                    updatePinfallLogic(rawDt);
+
+                    // Auto KO / TKO Check if health hits 0 and opponent takes massive finisher
+                    if (p1Fighter.health <= 0 && !pinState.active && p1Fighter.state !== 'knockdown') {
+                        p1Fighter.startAction('knockdown', 3.5);
+                        setCommentary(`${p1Fighter.star.name} is out cold on the canvas! Go for the pin [I]!`);
+                    }
+                    if (p2Fighter.health <= 0 && !pinState.active && p2Fighter.state !== 'knockdown') {
+                        p2Fighter.startAction('knockdown', 3.5);
+                        setCommentary(`${p2Fighter.star.name} is completely stunned! Press [I] to Pin!`);
+                    }
+                }
+
+                // Update Camera Shake
+                if (cameraShake.intensity > 0) {
+                    cameraShake.x = (Math.random() - 0.5) * cameraShake.intensity * 2;
+                    cameraShake.y = (Math.random() - 0.5) * cameraShake.intensity * 2;
+                    cameraShake.intensity = Math.max(0, cameraShake.intensity - rawDt * 48);
+                } else {
+                    cameraShake.x = 0;
+                    cameraShake.y = 0;
+                }
+
+                // Render Scene scaled to fit container seamlessly
+                ctx.save();
+                const scaleX = canvas.width / V_WIDTH;
+                const scaleY = canvas.height / V_HEIGHT;
+                const scale = Math.min(scaleX, scaleY);
+                const offsetX = (canvas.width - V_WIDTH * scale) * 0.5;
+                const offsetY = (canvas.height - V_HEIGHT * scale) * 0.5;
+
+                ctx.fillStyle = '#04050a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.translate(offsetX + cameraShake.x, offsetY + cameraShake.y);
+                ctx.scale(scale, scale);
+
+                drawArenaAndRing(ctx, matchTimeSeconds);
+
+                // Draw knocked-down wrestler first so standing attacker renders in front
+                if (p1Fighter.state === 'knockdown') {
+                    p1Fighter.draw(ctx);
+                    p2Fighter.draw(ctx);
+                } else {
+                    p2Fighter.draw(ctx);
+                    p1Fighter.draw(ctx);
+                }
+
+                // Update & Draw Sweat/Impact Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const pt = particles[i];
+                    pt.x += pt.vx * rawDt;
+                    pt.y += pt.vy * rawDt;
+                    pt.vy += 650 * rawDt;
+                    pt.alpha -= rawDt * 1.9;
+                    if (pt.alpha <= 0) {
+                        particles.splice(i, 1);
+                        continue;
+                    }
+                    ctx.fillStyle = pt.color;
+                    ctx.globalAlpha = Math.max(0, pt.alpha);
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1;
+
+                // Update & Draw Floating Combat Callout Texts
+                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                    const ft = floatingTexts[i];
+                    ft.y += ft.vy * rawDt;
+                    ft.alpha -= rawDt * 1.1;
+                    if (ft.alpha <= 0) {
+                        floatingTexts.splice(i, 1);
+                        continue;
+                    }
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, ft.alpha);
+                    ctx.font = '900 32px Teko, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(ft.text, ft.x, ft.y);
+                    ctx.fillStyle = ft.color;
+                    ctx.fillText(ft.text, ft.x, ft.y);
+                    ctx.restore();
+                }
+
+                // Finisher Camera Flash Effect
+                if (flashAlpha > 0) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha})`;
+                    ctx.fillRect(0, 0, V_WIDTH, V_HEIGHT);
+                    flashAlpha = Math.max(0, flashAlpha - rawDt * 2.5);
+                }
+
+                ctx.restore();
+                updateBroadcastHUD();
+            }
+
+            requestAnimationFrame(mainGameLoop);
+        }
+
+        /* ============================================================================
+           11. UI EVENT LISTENERS & ON-SCREEN TOUCH BUTTONS
+           ============================================================================ */
+        window.onload = function () {
+            initRosterUI();
+
+            document.getElementById('btnSelectSlotP1').addEventListener('click', () => {
+                activeSelectingSlot = 1;
+                updateRosterHighlights();
+            });
+            document.getElementById('btnSelectSlotP2').addEventListener('click', () => {
+                activeSelectingSlot = 2;
+                updateRosterHighlights();
+            });
+
+            document.getElementById('modeP1vsCPU').addEventListener('click', () => {
+                matchMode = 'cpu';
+                document.getElementById('modeP1vsCPU').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-zinc-950 transition';
+                document.getElementById('modeP1vsP2').className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+                document.getElementById('p2BadgeLabel').textContent = 'CPU OPPONENT';
+                document.getElementById('aiDifficultySelect').classList.remove('hidden');
+                updateRosterHighlights();
+            });
+
+            document.getElementById('modeP1vsP2').addEventListener('click', () => {
+                matchMode = 'pvp';
+                document.getElementById('modeP1vsP2').className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-zinc-950 transition';
+                document.getElementById('modeP1vsCPU').className = 'px-3 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition';
+                document.getElementById('p2BadgeLabel').textContent = 'PLAYER 2';
+                document.getElementById('aiDifficultySelect').classList.add('hidden');
+                updateRosterHighlights();
+            });
+
+            document.getElementById('btnStartMatch').addEventListener('click', startMainEventMatch);
+            document.getElementById('btnRematch').addEventListener('click', startMainEventMatch);
+
+            const returnToRoster = () => {
+                gameActive = false;
+                document.getElementById('arenaScreen').classList.add('hidden');
+                document.getElementById('selectionScreen').classList.remove('hidden');
+                document.getElementById('btnBackToRoster').classList.add('hidden');
+                document.getElementById('victoryModal').classList.add('hidden');
+            };
+            document.getElementById('btnBackToRoster').addEventListener('click', returnToRoster);
+            document.getElementById('btnVictoryRoster').addEventListener('click', returnToRoster);
+
+            document.getElementById('btnShowControlsModal').addEventListener('click', () => {
+                document.getElementById('controlsModal').classList.remove('hidden');
+            });
+            document.getElementById('btnCloseControlsModal').addEventListener('click', () => {
+                document.getElementById('controlsModal').classList.add('hidden');
+            });
+
+            document.getElementById('btnToggleSound').addEventListener('click', () => {
+                sfx.enabled = !sfx.enabled;
+                document.getElementById('soundIcon').textContent = sfx.enabled ? '🔊' : '🔇';
+            });
+
+            document.getElementById('kickoutPrompt').addEventListener('click', registerKickoutMash);
+
+            // Bind On-Screen Touch / Click Action Dock
+            document.querySelectorAll('.touch-ctrl').forEach(btn => {
+                const act = btn.getAttribute('data-action');
+                const triggerStart = (e) => {
+                    e.preventDefault();
+                    sfx.init();
+                    if (!p1Fighter || !gameActive) return;
+                    if (act === 'left') keys['touch_left'] = true;
+                    else if (act === 'right') keys['touch_right'] = true;
+                    else if (act === 'sprint') keys['touch_sprint'] = true;
+                    else if (act === 'block') keys['KeyS'] = true;
+                    else if (act === 'light' && ['idle', 'walk', 'run'].includes(p1Fighter.state)) p1Fighter.startAction('light', 0.34, 8);
+                    else if (act === 'heavy' && ['idle', 'walk', 'run'].includes(p1Fighter.state)) p1Fighter.startAction('heavy', 0.54, 16);
+                    else if (act === 'grapple' && ['idle', 'walk', 'run'].includes(p1Fighter.state)) p1Fighter.startAction('grapple', 0.68, 22);
+                    else if (act === 'pin') tryInitiatePinfall(p1Fighter, p2Fighter);
+                    else if (act === 'finisher' && p1Fighter.momentum >= 100) p1Fighter.startAction('finisher', 0.85, 0);
+                };
+                const triggerEnd = (e) => {
+                    e.preventDefault();
+                    if (act === 'left') keys['touch_left'] = false;
+                    else if (act === 'right') keys['touch_right'] = false;
+                    else if (act === 'sprint') keys['touch_sprint'] = false;
+                    else if (act === 'block') keys['KeyS'] = false;
+                };
+                btn.addEventListener('mousedown', triggerStart);
+                btn.addEventListener('mouseup', triggerEnd);
+                btn.addEventListener('mouseleave', triggerEnd);
+                btn.addEventListener('touchstart', triggerStart, { passive: false });
+                btn.addEventListener('touchend', triggerEnd, { passive: false });
+            });
+
+            requestAnimationFrame(mainGameLoop);
+        };
+    </script>
 </body>
 </html>
