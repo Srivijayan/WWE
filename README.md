@@ -1,52 +1,49 @@
-# Ring Rivals
+# WWE Main Event (browser wrestling game)
 
-A 2D wrestling fighting game that runs in any web browser. Pick from 10 original wrestlers, each with their own power, speed, defense, HP, entrance theme and finishing move, then fight the CPU or a friend on the same keyboard.
+A 2D wrestling game that runs in any browser: 6 superstars, combos, grapples, finishers, pinfalls, a CPU opponent, and local or online 2-player.
 
 ## Play
 
-Open `index.html` in a browser, or serve the folder (for example `python3 -m http.server`) and open it. It also works on GitHub Pages. There is no install or build step.
+Serve the folder and open it in a browser, for example:
 
-## Features
+```
+npx http-server -p 8080 .
+```
 
-- **10 wrestlers in 6 styles**: giants, powerhouses, brawlers, technicians, strikers and high-flyers. Stats always add up to 20 or 21, so nobody is simply the best.
-- **Entrances**: lights go down, pyro fires, the announcer reads the intro and each wrestler walks out to their own theme. Press any attack button, Enter or tap to skip.
-- **Entrance music**: 10 original themes made in the browser with the Web Audio API (doom metal, punk, dark waltz, taiko, pop and more). No audio files.
-- **Fighting**: punches, kicks, 3-hit combos, running strikes, grapples, Irish whips, stomps, top-rope dives, blocking and grapple reversals.
-- **Power system**: HP, stamina (run out and you get dizzy), and a special meter that unlocks a signature move at 50 and a finisher at 100. Under 30% HP the meter fills 50% faster.
-- **Pins**: a 3-count pin wins on an opponent under 25% HP. Mash grapple to kick out.
-- **Modes**: 1 player vs CPU (Easy, Normal, Hard) or 2 players on one keyboard or two gamepads. Touch buttons on phones in 1-player mode.
+Then open http://localhost:8080. It also works on GitHub Pages. Opening `index.html` straight from disk works too, except online rooms.
 
 ## Controls
 
-| Action | Player 1 | Player 2 |
+| Action | Player 1 | Player 2 (local) |
 | --- | --- | --- |
-| Move | A / D | ← / → |
-| Jump / climb corner | W | ↑ |
-| Block | S | ↓ |
-| Run (hold) | Left Shift | Right Ctrl or Right Shift |
-| Punch | F | J |
-| Kick | G | K |
-| Grapple (+ direction to whip) | H | L |
-| Signature / finisher | R | I |
-| Pin | E | U |
-| Pause | Esc | Esc |
+| Move | A / D (or ← / → vs CPU) | ← / → |
+| Jump | W | ↑ |
+| Block (hold) | S | ↓ |
+| Sprint (hold) | Left Shift | Right Shift |
+| Combo strike | J | N or Numpad 1 |
+| Heavy strike / dropkick | K | M or Numpad 2 |
+| Grapple (on a downed opponent: pin) | U | , or Numpad 3 |
+| Dodge roll | L | / or Numpad 5 |
+| Pin | I | . or Numpad 0 |
+| Finisher (momentum full) | Space | Enter |
+| Pause | Esc or P | Esc or P |
 
-Gamepads: X punch, Y kick, B grapple, A pin, RB special, LB block, RT run.
+Moves pressed while another move is finishing are queued, so combos flow. When pinned, mash your attack keys to kick out. On phones and tablets an on-screen joystick and buttons appear automatically.
 
-## Code
+## Files
 
-| File | What it does |
+| File | What it is |
 | --- | --- |
-| `src/roster.js` | The 10 wrestlers: stats, look, moves and theme settings |
-| `src/audio.js` | Web Audio music sequencer, crowd and sound effects |
-| `src/input.js` | Keyboard, gamepad and touch controls |
-| `src/fighter.js` | One wrestler in the ring and their body poses |
-| `src/combat.js` | Moves, damage formula, blocks, reversals, specials, pins |
-| `src/ai.js` | CPU opponent and difficulty levels |
-| `src/render.js` | Arena, crowd, ring, wrestlers, HUD and effects |
-| `src/state.js` | Screens: title, mode, select, entrances, match, results |
-| `src/main.js` | Boot and the 60 fps game loop |
+| `index.html` | The whole game: roster, fighting, AI, pinfalls, online play |
+| `css/tailwind.css` | Prebuilt styles (generated, don't edit by hand) |
+| `lib/peerjs.min.js` | PeerJS 1.5.2, used for online rooms |
+| `tailwind.config.js`, `css-input.css`, `package.json` | Build setup for the styles |
 
-The scripts are plain (non-module) JavaScript so the game also runs when `index.html` is opened straight from disk. To add a wrestler, add one entry to `src/roster.js`.
+### After changing Tailwind classes
 
-The wrestlers, names and music are original and not affiliated with any wrestling company.
+The styles are prebuilt instead of compiled in the browser, which keeps the game smooth. If you add or change Tailwind classes in `index.html`, rebuild them:
+
+```
+npm install
+npm run build:css
+```
