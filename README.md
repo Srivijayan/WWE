@@ -1,6 +1,21 @@
 # WWE Main Event (browser wrestling game)
 
-A 2D wrestling game that runs in any browser: 6 superstars, combos, grapples, finishers, pinfalls, a CPU opponent, and local or online 2-player.
+A 2D wrestling game that runs in any browser: 10 superstars (6 men, 4 women) plus your own created ones, combos, grapples, finishers, 4 match types, 3 arenas, a CPU opponent, local or online 2-player, and an online career and leaderboard.
+
+## Match types and arenas
+
+| Match | How to win |
+| --- | --- |
+| Main Event | Knock your opponent down and pin them for the 3-count |
+| Extreme Rules | Same, with no disqualifications: press Grab next to the steel chair to pick it up; chair shots hit 60% harder until it breaks |
+| Ladder Match | No pinfalls: press Grab next to the ladder to set it up under the title, hold Up to climb, grab the title. Hit the ladder to knock a climber off |
+| Royal Rumble (vs CPU) | Entrants keep coming: knock a worn-down opponent down near the ropes to throw them over the top. Eliminate 5 to win |
+
+Arenas: Main Event, SmackDown and Raw (lighting and ring signage).
+
+## Create-a-Superstar
+
+Press **+ Create** on the roster to make your own wrestler: name, men's or women's division, skin, hair, ring gear colours, finisher and a focus stat. Every stat starts at 60. Each win against the CPU or online adds +1 to every stat and +2 to the focus stat, up to 99. Created superstars are saved in this browser and also work in online rooms.
 
 ## Play
 
