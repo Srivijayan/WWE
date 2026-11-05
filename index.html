@@ -7,6 +7,7 @@
     <!-- Prebuilt Tailwind CSS (run `npm run build:css` after adding new classes) -->
     <link rel="stylesheet" href="css/tailwind.css">
     <script src="lib/peerjs.min.js" defer></script>
+    <script src="js/ugs.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -135,6 +136,9 @@
         </div>
 
         <div class="flex items-center gap-1.5 sm:gap-2">
+            <button id="btnLeaderboard" class="px-2.5 py-1 rounded bg-red-600/90 hover:bg-red-500 text-xs font-bold text-white border border-red-400/40 flex items-center gap-1 transition shadow" title="Leaderboard and your career">
+                🏆 <span class="hidden sm:inline" id="ugsHeaderLabel">Leaderboard</span>
+            </button>
             <button id="btnOpenMultiplayerModal" class="px-2.5 py-1 rounded bg-blue-600/90 hover:bg-blue-500 text-xs font-bold text-white border border-blue-400/40 flex items-center gap-1 transition shadow">
                 🌐 <span>Multiplayer</span>
             </button>
@@ -443,6 +447,7 @@
                     <div class="text-xs font-extrabold uppercase tracking-widest text-red-400 mb-1">HERE IS YOUR WINNER... AND UNDISPUTED CHAMPION!</div>
                     <h2 id="winnerNameTitle" class="font-broadcast text-6xl font-bold text-white tracking-wider leading-none mb-2">ROMAN REIGNS</h2>
                     <p id="winnerMethodSubtitle" class="text-xs text-zinc-300 mb-4">Victory by Pinfall after Spear!</p>
+                    <p id="winnerOnlineNote" class="hidden text-xs font-bold text-blue-300 -mt-2 mb-2"></p>
                     
                     <div class="flex justify-center my-3">
                         <canvas id="winnerPortraitCanvas" width="180" height="180" class="w-36 h-36 rounded-full bg-gradient-to-b from-red-500/30 to-zinc-950 border-2 border-red-400 shadow-xl"></canvas>
@@ -623,6 +628,53 @@
                             ⌨️ Start 2-Player Keyboard Match
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEADERBOARD & CAREER MODAL (Unity Gaming Services) -->
+    <div id="leaderboardModal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full max-h-full overflow-y-auto custom-scrollbar bg-zinc-900 border-2 border-red-600/60 rounded-2xl p-5 sm:p-6 shadow-2xl">
+            <div class="flex justify-between items-start border-b border-zinc-800 pb-3 mb-4 gap-3">
+                <div>
+                    <h3 class="font-broadcast text-3xl sm:text-4xl text-white tracking-wider leading-none">🏆 WORLD LEADERBOARD</h3>
+                    <p id="ugsStatusText" class="text-xs text-zinc-400 mt-1">Connecting…</p>
+                </div>
+                <button type="button" id="btnCloseLeaderboard" class="text-zinc-400 hover:text-white text-xl font-bold px-2" aria-label="Close">✕</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Your career -->
+                <div class="md:col-span-2 bg-zinc-950 p-4 rounded-xl border border-red-600/40 space-y-3">
+                    <div class="text-xs font-extrabold uppercase tracking-wider text-red-400">Your career</div>
+                    <div>
+                        <label for="inputPlayerName" class="text-[11px] uppercase font-bold text-zinc-400">Leaderboard name</label>
+                        <div class="flex gap-2 mt-1">
+                            <input id="inputPlayerName" type="text" maxlength="40" placeholder="Your name" class="flex-1 min-w-0 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500" />
+                            <button type="button" id="btnSaveName" class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs">Save</button>
+                        </div>
+                        <p id="nameStatus" class="text-[11px] text-zinc-400 mt-1 min-h-[1em]"></p>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerWins" class="font-broadcast text-3xl text-red-400 leading-none">0</div><div class="text-[10px] uppercase text-zinc-400 font-bold">Wins</div></div>
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerLosses" class="font-broadcast text-3xl text-blue-400 leading-none">0</div><div class="text-[10px] uppercase text-zinc-400 font-bold">Losses</div></div>
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerRank" class="font-broadcast text-3xl text-white leading-none">—</div><div class="text-[10px] uppercase text-zinc-400 font-bold">World rank</div></div>
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerMatches" class="font-broadcast text-2xl text-white leading-none">0</div><div class="text-[10px] uppercase text-zinc-400 font-bold">Matches</div></div>
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerBestStreak" class="font-broadcast text-2xl text-white leading-none">0</div><div class="text-[10px] uppercase text-zinc-400 font-bold">Best streak</div></div>
+                        <div class="bg-zinc-900 rounded-lg py-2"><div id="careerFinishers" class="font-broadcast text-2xl text-white leading-none">0</div><div class="text-[10px] uppercase text-zinc-400 font-bold">Finishers</div></div>
+                    </div>
+                    <p class="text-[11px] text-zinc-500 leading-relaxed">Wins against the CPU and in online rooms count. Your career is saved to this browser's anonymous player account.</p>
+                </div>
+
+                <!-- Top 10 -->
+                <div class="md:col-span-3 bg-zinc-950 p-4 rounded-xl border border-blue-600/40">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-blue-400">Top 10 by wins</div>
+                        <button type="button" id="btnRefreshLeaderboard" class="text-[11px] font-bold text-zinc-300 hover:text-white px-2 py-1 rounded bg-zinc-800">↻ Refresh</button>
+                    </div>
+                    <ol id="leaderboardList" class="space-y-1 text-sm"></ol>
+                    <p id="leaderboardMessage" class="text-xs text-zinc-400 mt-2"></p>
                 </div>
             </div>
         </div>
@@ -969,7 +1021,7 @@
            the client only sends its inputs and draws what the host sends.
            ============================================================================ */
         const SYNC_FIELDS = ['x', 'y', 'vx', 'vy', 'facing', 'health', 'stamina', 'momentum', 'state', 'stateTimer',
-            'stateDuration', 'moveVariant', 'comboStep', 'comboCount', 'bodyRotation', 'expression'];
+            'stateDuration', 'moveVariant', 'comboStep', 'comboCount', 'bodyRotation', 'expression', 'finishersHit'];
         const pickSync = (f) => { const o = {}; SYNC_FIELDS.forEach(k => { o[k] = f[k]; }); return o; };
 
         // Effects that happen on the host are recorded and replayed on the client
@@ -2134,6 +2186,7 @@
                 this.comboResetTimer = 2.8;
                 this.lastBigMove = isFin ? this.star.finisherName : 'German suplex';
                 if (isFin) {
+                    this.finishersHit = (this.finishersHit || 0) + 1;
                     this.momentum = 0;
                     flashAlpha = 0.8;
                     netFx('flash', [0.8]);
@@ -3297,6 +3350,113 @@
             rematch.classList.toggle('opacity-50', netMultiplayer.isClient);
             document.getElementById('victoryModal').classList.remove('hidden');
             document.getElementById('btnPause').classList.add('hidden');
+            recordOnlineResult(winner);
+        }
+
+        /* ============================================================================
+           9B. UNITY GAMING SERVICES: CAREER, LEADERBOARD, PLAYER NAME (see js/ugs.js)
+           ============================================================================ */
+        // Only matches with one clear local player count: vs CPU, or either side of an online room
+        async function recordOnlineResult(winner) {
+            const note = document.getElementById('winnerOnlineNote');
+            note.classList.add('hidden');
+            if (!window.UGS || UGS.state.status !== 'online') return;
+            const counts = matchMode === 'cpu' || netMultiplayer.isHost || netMultiplayer.isClient;
+            if (!counts) return;
+            const me = netMultiplayer.isClient ? p2Fighter : p1Fighter;
+            const won = winner === me;
+            note.textContent = 'Saving to your career…';
+            note.classList.remove('hidden');
+            const result = await UGS.recordMatch({ won, finishers: me.finishersHit || 0 });
+            if (!result) { note.classList.add('hidden'); return; }
+            const c = UGS.state.career;
+            if (!won) note.textContent = `Career: ${c.wins} wins • ${c.losses} losses`;
+            else if (result.rank) note.textContent = `🏆 +1 WIN (${c.wins} total) • WORLD RANK #${result.rank}`;
+            else if (result.leaderboardError) note.textContent = `+1 WIN (${c.wins} total) • leaderboard unavailable`;
+            else note.textContent = `+1 WIN (${c.wins} total)`;
+        }
+
+        function renderCareer() {
+            const st = window.UGS ? UGS.state : null;
+            const label = document.getElementById('ugsHeaderLabel');
+            const status = document.getElementById('ugsStatusText');
+            if (!st) return;
+            const c = st.career;
+            setHud('careerWins', 'text', String(c.wins));
+            setHud('careerLosses', 'text', String(c.losses));
+            setHud('careerMatches', 'text', String(c.matches));
+            setHud('careerBestStreak', 'text', String(c.bestStreak));
+            setHud('careerFinishers', 'text', String(c.finishers));
+            if (st.status === 'online') {
+                label.textContent = `${c.wins} W`;
+                status.textContent = st.playerName ? `Signed in as ${st.playerName}` : 'Signed in (anonymous player)';
+            } else if (st.status === 'signing-in') {
+                label.textContent = 'Leaderboard';
+                status.textContent = 'Connecting to Unity Gaming Services…';
+            } else {
+                label.textContent = 'Leaderboard';
+                status.textContent = 'Offline: online stats are unavailable right now. The game still works.';
+            }
+            const input = document.getElementById('inputPlayerName');
+            if (st.playerName && document.activeElement !== input) input.value = st.playerName.replace(/#\d+$/, '');
+        }
+
+        const escapeHtml = (t) => String(t).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+
+        async function refreshLeaderboard() {
+            const list = document.getElementById('leaderboardList');
+            const msg = document.getElementById('leaderboardMessage');
+            if (!window.UGS || UGS.state.status !== 'online') {
+                list.innerHTML = '';
+                msg.textContent = 'Leaderboard is unavailable while offline.';
+                return;
+            }
+            msg.textContent = 'Loading…';
+            try {
+                const [top, mine] = await Promise.all([UGS.topScores(10), UGS.myEntry()]);
+                list.innerHTML = top.map(e => {
+                    const isMe = e.playerId === UGS.state.playerId;
+                    return `<li class="flex items-center justify-between px-3 py-1.5 rounded-lg ${isMe ? 'bg-red-600/25 border border-red-500/50' : 'bg-zinc-900'}">
+                        <span class="flex items-center gap-2 min-w-0"><span class="font-broadcast text-xl w-7 ${e.rank === 0 ? 'text-red-400' : 'text-zinc-400'}">#${e.rank + 1}</span>
+                        <span class="truncate font-semibold text-white">${escapeHtml(e.playerName || 'Player')}${isMe ? ' (you)' : ''}</span></span>
+                        <span class="font-broadcast text-xl text-blue-300">${Math.round(e.score)} W</span></li>`;
+                }).join('');
+                setHud('careerRank', 'text', mine ? `#${mine.rank + 1}` : '—');
+                msg.textContent = top.length ? '' : 'No wins posted yet. Win a match to take #1!';
+            } catch (e) {
+                list.innerHTML = '';
+                msg.textContent = /config could not be found/i.test(e.message)
+                    ? `The leaderboard "${UGS.CONFIG.leaderboardId}" isn't set up in the Unity project yet.`
+                    : `Couldn't load the leaderboard (${e.message}).`;
+            }
+        }
+
+        function initOnlineServices() {
+            if (!window.UGS) return;
+            UGS.onChange(renderCareer);
+            UGS.start();
+            document.getElementById('btnLeaderboard').addEventListener('click', () => {
+                document.getElementById('leaderboardModal').classList.remove('hidden');
+                renderCareer();
+                refreshLeaderboard();
+            });
+            document.getElementById('btnCloseLeaderboard').addEventListener('click', () => {
+                document.getElementById('leaderboardModal').classList.add('hidden');
+            });
+            document.getElementById('btnRefreshLeaderboard').addEventListener('click', refreshLeaderboard);
+            const saveName = async () => {
+                const status = document.getElementById('nameStatus');
+                status.textContent = 'Saving…';
+                try {
+                    const name = await UGS.setName(document.getElementById('inputPlayerName').value);
+                    status.textContent = `Saved as ${name}`;
+                    refreshLeaderboard();
+                } catch (e) {
+                    status.textContent = `Couldn't save the name (${e.message}).`;
+                }
+            };
+            document.getElementById('btnSaveName').addEventListener('click', saveName);
+            document.getElementById('inputPlayerName').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName(); });
         }
 
         /* ============================================================================
@@ -3799,6 +3959,7 @@
 
         window.onload = function () {
             initRosterUI();
+            initOnlineServices();
             initVirtualAnalogJoystick();
 
             document.getElementById('btnSelectSlotP1').addEventListener('click', () => {
