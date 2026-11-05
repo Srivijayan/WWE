@@ -1,0 +1,12 @@
+{
+  "name": "wwe-main-event",
+  "private": true,
+  "description": "Browser wrestling game",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i css-input.css -o css/tailwind.css --minify",
+    "start": "npx --yes http-server -c-1 -p 8080 ."
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
