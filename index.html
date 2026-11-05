@@ -234,7 +234,7 @@
                 </div>
 
                 <!-- 6-Superstar Grid -->
-                <div id="rosterGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-2">
+                <div id="rosterGrid" class="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-2 my-2 lg:max-h-[48vh] overflow-y-auto custom-scrollbar pr-1">
                     <!-- Populated via JS with rich realistic canvas portraits -->
                 </div>
             </div>
@@ -448,6 +448,7 @@
                     <h2 id="winnerNameTitle" class="font-broadcast text-6xl font-bold text-white tracking-wider leading-none mb-2">ROMAN REIGNS</h2>
                     <p id="winnerMethodSubtitle" class="text-xs text-zinc-300 mb-4">Victory by Pinfall after Spear!</p>
                     <p id="winnerOnlineNote" class="hidden text-xs font-bold text-blue-300 -mt-2 mb-2"></p>
+                    <p id="winnerCawNote" class="hidden text-xs font-bold text-red-300 mb-2"></p>
                     
                     <div class="flex justify-center my-3">
                         <canvas id="winnerPortraitCanvas" width="180" height="180" class="w-36 h-36 rounded-full bg-gradient-to-b from-red-500/30 to-zinc-950 border-2 border-red-400 shadow-xl"></canvas>
@@ -680,6 +681,59 @@
         </div>
     </div>
 
+    <!-- CREATE-A-SUPERSTAR MODAL -->
+    <div id="cawModal" class="hidden fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4">
+        <div class="max-w-3xl w-full max-h-full overflow-y-auto custom-scrollbar bg-zinc-900 border-2 border-red-600/60 rounded-2xl p-5 sm:p-6 shadow-2xl">
+            <div class="flex justify-between items-start border-b border-zinc-800 pb-3 mb-4 gap-3">
+                <div>
+                    <h3 id="cawTitle" class="font-broadcast text-3xl sm:text-4xl text-white tracking-wider leading-none">CREATE A SUPERSTAR</h3>
+                    <p class="text-xs text-zinc-400 mt-1">Start at rookie level and grow stronger with every win.</p>
+                </div>
+                <button type="button" id="btnCloseCaw" class="text-zinc-400 hover:text-white text-xl font-bold px-2" aria-label="Close">✕</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="md:col-span-2 bg-zinc-950 rounded-xl border border-zinc-800 p-3 flex flex-col items-center">
+                    <canvas id="cawPreview" width="260" height="240" class="w-56 h-52"></canvas>
+                    <div id="cawPreviewName" class="font-broadcast text-3xl text-white leading-none mt-1 text-center">YOUR NAME</div>
+                    <div id="cawPreviewStats" class="text-xs text-zinc-300 mt-2 grid grid-cols-2 gap-x-4 gap-y-1 w-full max-w-[220px]"></div>
+                    <p class="text-[11px] text-zinc-500 mt-3 text-center leading-relaxed">Every stat starts at 60. Each win against the CPU or online adds +1 to every stat and +2 to your focus stat, up to 99.</p>
+                </div>
+                <div class="md:col-span-3 space-y-3 text-xs">
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="block"><span class="text-[11px] uppercase font-bold text-zinc-400">Ring name</span>
+                            <input id="cawName" type="text" maxlength="16" placeholder="e.g. Iron Blaze" class="mt-1 w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-red-500" /></label>
+                        <label class="block"><span class="text-[11px] uppercase font-bold text-zinc-400">Nickname</span>
+                            <input id="cawNick" type="text" maxlength="24" placeholder="e.g. The Rookie" class="mt-1 w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500" /></label>
+                    </div>
+                    <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Division</div><div id="cawGender" class="flex gap-2"></div></div>
+                    <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Skin tone</div><div id="cawSkin" class="flex flex-wrap gap-2"></div></div>
+                    <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Hair</div><div id="cawHair" class="flex flex-wrap gap-2"></div></div>
+                    <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Hair colour</div><div id="cawHairColor" class="flex flex-wrap gap-2"></div></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Ring gear</div><div id="cawColor" class="flex flex-wrap gap-2"></div></div>
+                        <div><div class="text-[11px] uppercase font-bold text-zinc-400 mb-1">Trim</div><div id="cawTrim" class="flex flex-wrap gap-2"></div></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="block"><span class="text-[11px] uppercase font-bold text-zinc-400">Finisher</span>
+                            <select id="cawFinisher" class="mt-1 w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-2 text-xs font-bold text-white"></select></label>
+                        <label class="block"><span class="text-[11px] uppercase font-bold text-zinc-400">Focus stat</span>
+                            <select id="cawFocus" class="mt-1 w-full bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-2 text-xs font-bold text-white">
+                                <option value="power">Strength / Power</option>
+                                <option value="speed">Speed / Agility</option>
+                                <option value="grapple">Grapple &amp; Slam</option>
+                                <option value="stamina">Stamina</option>
+                            </select></label>
+                    </div>
+                    <p id="cawError" class="text-red-400 font-bold min-h-[1em]"></p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="btnCawSave" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-broadcast text-2xl font-bold tracking-wider uppercase">💾 Save superstar</button>
+                        <button type="button" id="btnCawDelete" class="hidden px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-bold text-xs border border-zinc-600">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CONTROLS HELP MODAL -->
     <div id="controlsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="max-w-xl w-full bg-zinc-900 border border-zinc-700 rounded-2xl p-6 shadow-2xl">
@@ -891,6 +945,123 @@
                     rightGauntlet: '#eab308',
                     leftWristband: '#eab308',
                     bootColor: '#ca8a04'
+                }
+            },
+            {
+                id: 'rhea',
+                gender: 'female',
+                name: 'RHEA RIPLEY',
+                nickname: '"Mami • The Eradicator"',
+                weight: '5\'7" • 137 LBS',
+                ovr: 95,
+                stats: { power: 92, speed: 86, grapple: 94, stamina: 91 },
+                finisherName: 'Riptide Powerbomb',
+                finisherType: 'powerbomb',
+                skinBase: '#ecc6ad',
+                skinShadow: '#c49478',
+                skinHighlight: '#fbe0cf',
+                hairStyle: 'side_shave',
+                hairColor: '#131216',
+                beardStyle: 'clean',
+                eyeColor: '#4b5563',
+                lipColor: '#5b1e2a',
+                bodyScale: { shoulder: 0.96, chest: 0.94, height: 0.97 },
+                attire: {
+                    trunkColor: '#0b0b0e',
+                    trimColor: '#dc2626',
+                    top: '#0b0b0e',
+                    pants: true,
+                    pantsColor: '#111115',
+                    leftWristband: '#111115',
+                    bootColor: '#0b0b0e'
+                }
+            },
+            {
+                id: 'becky',
+                gender: 'female',
+                name: 'BECKY LYNCH',
+                nickname: '"The Man"',
+                weight: '5\'6" • 135 LBS',
+                ovr: 94,
+                stats: { power: 86, speed: 91, grapple: 90, stamina: 94 },
+                finisherName: 'Manhandle Slam',
+                finisherType: 'f5_slam',
+                skinBase: '#f3d2bc',
+                skinShadow: '#cfa287',
+                skinHighlight: '#fde7d9',
+                hairStyle: 'flowing_long',
+                hairColor: '#c2410c',
+                beardStyle: 'clean',
+                eyeColor: '#2563eb',
+                lipColor: '#a3434b',
+                bodyScale: { shoulder: 0.92, chest: 0.91, height: 0.96 },
+                attire: {
+                    trunkColor: '#111115',
+                    trimColor: '#1d4ed8',
+                    top: '#111115',
+                    pants: true,
+                    pantsColor: '#111115',
+                    leftWristband: '#1d4ed8',
+                    rightGauntlet: '#111115',
+                    bootColor: '#111115'
+                }
+            },
+            {
+                id: 'bianca',
+                gender: 'female',
+                name: 'BIANCA BELAIR',
+                nickname: '"The EST of WWE"',
+                weight: '5\'7" • 165 LBS',
+                ovr: 95,
+                stats: { power: 90, speed: 95, grapple: 89, stamina: 96 },
+                finisherName: 'K.O.D. Shoulder Slam',
+                finisherType: 'aa_slam',
+                skinBase: '#80523a',
+                skinShadow: '#5c3725',
+                skinHighlight: '#a06d50',
+                hairStyle: 'braid_long',
+                hairColor: '#17120f',
+                beardStyle: 'clean',
+                eyeColor: '#2d221b',
+                lipColor: '#6b2d2d',
+                bodyScale: { shoulder: 0.97, chest: 0.95, height: 0.98 },
+                attire: {
+                    trunkColor: '#b91c1c',
+                    trimColor: '#f8fafc',
+                    top: '#b91c1c',
+                    pants: false,
+                    kneePadColor: '#b91c1c',
+                    leftWristband: '#f8fafc',
+                    bootColor: '#b91c1c'
+                }
+            },
+            {
+                id: 'charlotte',
+                gender: 'female',
+                name: 'CHARLOTTE FLAIR',
+                nickname: '"The Queen"',
+                weight: '5\'10" • 143 LBS',
+                ovr: 95,
+                stats: { power: 87, speed: 88, grapple: 96, stamina: 92 },
+                finisherName: 'Figure-Eight Leg Lock',
+                finisherType: 'submission',
+                skinBase: '#efc8ac',
+                skinShadow: '#c69a7d',
+                skinHighlight: '#fbe2d0',
+                hairStyle: 'ponytail_long',
+                hairColor: '#efe3c0',
+                beardStyle: 'clean',
+                eyeColor: '#2563eb',
+                lipColor: '#b0405a',
+                bodyScale: { shoulder: 0.93, chest: 0.92, height: 1.0 },
+                attire: {
+                    trunkColor: '#1e3a8a',
+                    trimColor: '#e5e7eb',
+                    top: '#1e3a8a',
+                    pants: false,
+                    kneePadColor: '#1e3a8a',
+                    leftWristband: '#e5e7eb',
+                    bootColor: '#e5e7eb'
                 }
             }
         ];
@@ -1110,7 +1281,7 @@
                 this.setStatus(`Connecting to ${clean}…`, false);
 
                 // Same-browser tabs answer straight away through BroadcastChannel
-                this.sendPacket({ type: 'join_request', code: clean, p2Index: selectedP2Index });
+                this.sendPacket({ type: 'join_request', code: clean, p2Star: SUPERSTARS[selectedP2Index] });
 
                 if (window.Peer) {
                     try {
@@ -1134,7 +1305,7 @@
                 this.conn.on('open', () => {
                     this.setStatus(`Connected • Room ${this.roomCode}`, true);
                     if (this.mode === 'client') {
-                        this.sendPacket({ type: 'join_request', code: this.roomCode, p2Index: selectedP2Index });
+                        this.sendPacket({ type: 'join_request', code: this.roomCode, p2Star: SUPERSTARS[selectedP2Index] });
                     }
                 });
                 this.conn.on('data', (data) => this.handleNetworkPacket(data));
@@ -1175,15 +1346,15 @@
                 if (data.type === 'join_request' && this.mode === 'host') {
                     if (data.code !== this.roomCode || this.connected) return;
                     this.connected = true;
-                    if (typeof data.p2Index === 'number' && SUPERSTARS[data.p2Index]) selectedP2Index = data.p2Index;
+                    if (data.p2Star) selectedP2Index = adoptStar(data.p2Star);
                     updateRosterHighlights();
                     this.setStatus(`Player 2 joined room ${this.roomCode}!`, true);
                     document.getElementById('multiplayerModal').classList.add('hidden');
                     startMainEventMatch();
                 } else if (data.type === 'match_start' && this.mode === 'client') {
                     this.connected = true;
-                    selectedP1Index = data.p1Index;
-                    selectedP2Index = data.p2Index;
+                    selectedP1Index = adoptStar(data.p1Star);
+                    selectedP2Index = adoptStar(data.p2Star);
                     updateRosterHighlights();
                     this.setStatus(`Live match • Room ${this.roomCode}`, true);
                     document.getElementById('multiplayerModal').classList.add('hidden');
@@ -1277,8 +1448,44 @@
                 ctx.fill();
             }
 
+            // Long hair falling behind the shoulders
+            if (star.hairStyle === 'flowing_long') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-15, -12);
+                ctx.quadraticCurveTo(-25, 14, -19, 36);
+                ctx.lineTo(17, 33);
+                ctx.quadraticCurveTo(22, 10, 14, -12);
+                ctx.closePath();
+                ctx.fill();
+            } else if (star.hairStyle === 'side_shave') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-15, -12);
+                ctx.quadraticCurveTo(-24, 10, -18, 30);
+                ctx.lineTo(-2, 27);
+                ctx.quadraticCurveTo(-6, 6, 2, -12);
+                ctx.closePath();
+                ctx.fill();
+            } else if (star.hairStyle === 'ponytail_long') {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                ctx.ellipse(-14, -12, 5, 5, 0, 0, Math.PI * 2);
+                ctx.moveTo(-17, -10);
+                ctx.quadraticCurveTo(-27, 12, -21, 40);
+                ctx.quadraticCurveTo(-14, 16, -11, -9);
+                ctx.fill();
+            } else if (star.hairStyle === 'braid_long') {
+                ctx.fillStyle = star.hairColor;
+                for (let i = 0; i < 9; i++) {
+                    ctx.beginPath();
+                    ctx.ellipse(-13 - i * 0.9, -6 + i * 7.5, 4.6 - i * 0.18, 4.2, 0.35, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
             // 2. Muscular Neck & Trapezius Base
-            const neckGrad = cachedGradient(ctx, 'neck|' + star.id, () => {
+            const neckGrad = cachedGradient(ctx, 'neck|' + star.skinBase, () => {
                 const g = ctx.createLinearGradient(-10, 8, 10, 24);
                 g.addColorStop(0, star.skinShadow);
                 g.addColorStop(0.5, star.skinBase);
@@ -1302,7 +1509,7 @@
             ctx.fill();
 
             // 4. Cranium & Chiseled Jawline with 3D Radial Lighting
-            const faceGrad = cachedGradient(ctx, 'face|' + star.id, () => {
+            const faceGrad = cachedGradient(ctx, 'face|' + star.skinBase + star.skinHighlight, () => {
                 const g = ctx.createRadialGradient(2, -4, 3, 0, 0, 20);
                 g.addColorStop(0, star.skinHighlight);
                 g.addColorStop(0.55, star.skinBase);
@@ -1414,9 +1621,9 @@
                     ctx.arc(1.1, -0.5, 0.45, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // Upper eyelid shadow line
-                    ctx.strokeStyle = '#271c15';
-                    ctx.lineWidth = 1.1;
+                    // Upper eyelid shadow line (heavier lash line for the women)
+                    ctx.strokeStyle = star.gender === 'female' ? '#0b0b0e' : '#271c15';
+                    ctx.lineWidth = star.gender === 'female' ? 1.7 : 1.1;
                     ctx.beginPath();
                     ctx.arc(0, 0.4, 3.6, Math.PI * 1.1, Math.PI * 1.9);
                     ctx.stroke();
@@ -1429,7 +1636,7 @@
 
             // Expressive Eyebrows (The Rock's People's Eyebrow, Angry Roar, or Focused)
             ctx.strokeStyle = star.hairColor === '#d4af37' ? '#9a7b2c' : '#181412';
-            ctx.lineWidth = 2.2;
+            ctx.lineWidth = star.gender === 'female' ? 1.5 : 2.2;
             ctx.lineCap = 'round';
             const browTilt = expression === 'roar' ? 2.2 : (expression === 'pain' ? -1.5 : 1.2);
             // Left brow
@@ -1478,6 +1685,13 @@
                 ctx.fill();
                 ctx.fillStyle = '#f8fafc';
                 ctx.fillRect(-3, 9.8, 7, 1.5);
+            } else if (star.gender === 'female') {
+                ctx.fillStyle = star.lipColor || '#a3434b';
+                ctx.beginPath();
+                ctx.moveTo(-4, 10.6);
+                ctx.quadraticCurveTo(0.5, 8.9, 5, 10.2);
+                ctx.quadraticCurveTo(0.5, 13.6, -4, 10.6);
+                ctx.fill();
             } else {
                 // Determined lip line & subtle smirk
                 ctx.strokeStyle = '#5c3422';
@@ -1527,6 +1741,35 @@
                 ctx.stroke();
             }
 
+            // Front hair for the long styles
+            if (['flowing_long', 'braid_long', 'ponytail_long', 'side_shave'].includes(star.hairStyle)) {
+                ctx.fillStyle = star.hairColor;
+                ctx.beginPath();
+                if (star.hairStyle === 'side_shave') {
+                    // Swept over to one side, shaved on the other
+                    ctx.moveTo(-14.5, -4);
+                    ctx.quadraticCurveTo(-16, -24, 2, -23.5);
+                    ctx.quadraticCurveTo(11, -22, 12, -15);
+                    ctx.quadraticCurveTo(0, -17, -7, -9);
+                    ctx.closePath();
+                } else {
+                    ctx.moveTo(-14.5, -3);
+                    ctx.quadraticCurveTo(-16, -24, 0, -23.5);
+                    ctx.quadraticCurveTo(16, -24, 14.5, -3);
+                    ctx.quadraticCurveTo(10, -16, 0, -16.5);
+                    ctx.quadraticCurveTo(-9, -16, -14.5, -3);
+                }
+                ctx.fill();
+                if (star.hairStyle === 'flowing_long') {
+                    ctx.beginPath();
+                    ctx.moveTo(-14.5, -4);
+                    ctx.quadraticCurveTo(-17, 8, -12, 17);
+                    ctx.lineTo(-10, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+
             // Specular Sweat Shine on Forehead
             ctx.fillStyle = `rgba(255, 255, 255, ${0.22 + Math.sin(sweatPhase) * 0.08})`;
             ctx.beginPath();
@@ -1574,7 +1817,26 @@
             ctx.fill();
 
             // Singlet or Tattoos on Chest
-            if (star.attire.singlet) {
+            if (star.gender === 'female') {
+                // Ring-gear top with straps
+                ctx.fillStyle = star.attire.top || star.attire.trunkColor;
+                ctx.beginPath();
+                ctx.moveTo(-52, 46);
+                ctx.quadraticCurveTo(-26, 34, 0, 48);
+                ctx.quadraticCurveTo(26, 34, 52, 46);
+                ctx.lineTo(58, 88);
+                ctx.lineTo(-58, 88);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = star.attire.top || star.attire.trunkColor;
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(-30, 24); ctx.lineTo(-40, 46);
+                ctx.moveTo(30, 24); ctx.lineTo(40, 46);
+                ctx.stroke();
+                ctx.fillStyle = star.attire.trimColor;
+                ctx.fillRect(-58, 84, 116, 4);
+            } else if (star.attire.singlet) {
                 ctx.fillStyle = '#09090b';
                 ctx.beginPath();
                 ctx.moveTo(-42, 32);
@@ -1670,8 +1932,8 @@
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'w-full text-center mt-1 z-10';
                 infoDiv.innerHTML = `
-                    <div class="font-broadcast text-xl font-bold leading-none text-white truncate">${star.name}</div>
-                    <div class="text-[10px] text-red-400 font-bold tracking-wider">${star.ovr} OVR • ${star.stats.power} PWR</div>
+                    <div class="font-broadcast text-base sm:text-lg font-bold leading-none text-white truncate" title="${star.name}">${star.name}</div>
+                    <div class="text-[10px] text-red-400 font-bold tracking-wider">${star.ovr} OVR${star.custom ? ' • ' + (star.nickname.match(/(\d+-\d+)/) || ['', ''])[1] : ''}</div>
                 `;
 
                 const badgeContainer = document.createElement('div');
@@ -1681,6 +1943,14 @@
                 card.appendChild(portraitCanvas);
                 card.appendChild(infoDiv);
                 card.appendChild(badgeContainer);
+                if (star.custom && !star.remote) {
+                    const edit = document.createElement('button');
+                    edit.type = 'button';
+                    edit.className = 'absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-red-600 text-[10px] font-bold text-white z-20';
+                    edit.textContent = '✎ EDIT';
+                    edit.addEventListener('click', (e) => { e.stopPropagation(); openCawEditor(star.id); });
+                    card.appendChild(edit);
+                }
 
                 card.addEventListener('click', () => {
                     sfx.init();
@@ -1698,7 +1968,262 @@
                 grid.appendChild(card);
             });
 
+            const create = document.createElement('button');
+            create.type = 'button';
+            create.className = 'rounded-xl border-2 border-dashed border-red-600/60 hover:border-red-400 hover:bg-red-600/10 p-2 flex flex-col items-center justify-center gap-1 min-h-[150px] text-red-300 transition';
+            create.innerHTML = '<span class="font-broadcast text-5xl leading-none">+</span><span class="font-broadcast text-xl leading-none">CREATE</span><span class="text-[10px] font-bold text-zinc-400">YOUR OWN SUPERSTAR</span>';
+            create.addEventListener('click', () => openCawEditor(null));
+            grid.appendChild(create);
+
             updateRosterHighlights();
+        }
+
+        /* ============================================================================
+           5B. CREATE-A-SUPERSTAR: rookies start at 60 in every stat and grow with wins
+           ============================================================================ */
+        const CAW_KEY = 'wwe-caw-v1';
+        const CAW_BASE = 60;
+        const CAW_MAX = 99;
+        const CAW_LIMIT = 8;
+        const BASE_ROSTER_SIZE = SUPERSTARS.length;
+        const CAW_SKINS = [
+            ['#f3d2bc', '#cfa287', '#fde7d9'], ['#e3ac88', '#b87d58', '#f7cbb0'], ['#c68b59', '#996236', '#dfa978'],
+            ['#8c5a3c', '#64391f', '#a8754f'], ['#5e3a26', '#3e2416', '#7b4f36']
+        ];
+        const CAW_HAIR = {
+            male: [['crew_fade', 'Crew cut'], ['bald', 'Bald'], ['long_dark', 'Long'], ['viking_braid', 'Top knot']],
+            female: [['flowing_long', 'Long'], ['ponytail_long', 'Ponytail'], ['braid_long', 'Braid'], ['side_shave', 'Side shave']]
+        };
+        const CAW_HAIR_COLORS = ['#111113', '#3b2c20', '#7c2d12', '#c2410c', '#d4af37', '#efe3c0'];
+        const CAW_GEAR_COLORS = ['#dc2626', '#1d4ed8', '#111115', '#e5e7eb', '#7f1d1d', '#0ea5e9'];
+        const CAW_FINISHERS = [
+            ['spear', 'Spear'], ['powerbomb', 'Powerbomb'], ['submission', 'Leg-Lock Submission'], ['f5_slam', 'Cyclone Slam'],
+            ['aa_slam', 'Shoulder Slam'], ['tombstone', 'Piledriver'], ['rockbottom', 'Side Slam'], ['suplex', 'German Suplex']
+        ];
+        const STAT_KEYS = ['power', 'speed', 'grapple', 'stamina'];
+
+        function loadCaws() {
+            try { return JSON.parse(localStorage.getItem(CAW_KEY) || '[]') || []; } catch (e) { return []; }
+        }
+        function saveCaws(list) {
+            try { localStorage.setItem(CAW_KEY, JSON.stringify(list)); } catch (e) { /* storage blocked */ }
+        }
+        let cawList = loadCaws();
+
+        function cawStats(c) {
+            const w = c.wins || 0;
+            const stats = {};
+            STAT_KEYS.forEach(k => { stats[k] = Math.min(CAW_MAX, CAW_BASE + w + (c.focus === k ? w : 0)); });
+            return stats;
+        }
+
+        function buildCustomStar(c) {
+            const skin = CAW_SKINS[c.skin] || CAW_SKINS[1];
+            const stats = cawStats(c);
+            const female = c.gender === 'female';
+            const finisher = CAW_FINISHERS.find(f => f[0] === c.finisher) || CAW_FINISHERS[0];
+            return {
+                id: c.id,
+                custom: true,
+                gender: c.gender,
+                name: (c.name || 'ROOKIE').toUpperCase(),
+                nickname: `"${c.nick || 'The Rookie'}" • ${c.wins || 0}-${c.losses || 0}`,
+                weight: female ? '5\'7" • 140 LBS' : '6\'2" • 240 LBS',
+                ovr: Math.round(STAT_KEYS.reduce((t, k) => t + stats[k], 0) / 4),
+                stats,
+                finisherName: finisher[1],
+                finisherType: finisher[0],
+                skinBase: skin[0],
+                skinShadow: skin[1],
+                skinHighlight: skin[2],
+                hairStyle: c.hair,
+                hairColor: c.hairColor,
+                beardStyle: 'clean',
+                eyeColor: '#3b2f2f',
+                lipColor: '#a3434b',
+                bodyScale: female ? { shoulder: 0.93, chest: 0.92, height: 0.97 } : { shoulder: 1.06, chest: 1.05, height: 1.0 },
+                attire: {
+                    trunkColor: c.color,
+                    trimColor: c.trim,
+                    top: female ? c.color : undefined,
+                    pants: !female,
+                    pantsColor: c.color,
+                    kneePadColor: c.trim,
+                    leftWristband: c.trim,
+                    rightGauntlet: c.trim,
+                    bootColor: '#111115'
+                }
+            };
+        }
+
+        // Rebuild the roster: built-in superstars followed by this browser's created ones
+        function rebuildRoster() {
+            const p1Id = SUPERSTARS[selectedP1Index] && SUPERSTARS[selectedP1Index].id;
+            const p2Id = SUPERSTARS[selectedP2Index] && SUPERSTARS[selectedP2Index].id;
+            SUPERSTARS.length = BASE_ROSTER_SIZE;
+            cawList.forEach(c => SUPERSTARS.push(buildCustomStar(c)));
+            const find = (id, fallback) => { const i = SUPERSTARS.findIndex(st => st.id === id); return i >= 0 ? i : fallback; };
+            selectedP1Index = find(p1Id, 0);
+            selectedP2Index = find(p2Id, 1);
+            initRosterUI();
+        }
+
+        // A superstar sent by the other player in an online room (it may be their created one)
+        function adoptStar(star) {
+            if (!star || !star.id) return 0;
+            const i = SUPERSTARS.findIndex(st => st.id === star.id);
+            if (i >= 0) return i;
+            SUPERSTARS.push(Object.assign({}, star, { remote: true }));
+            initRosterUI();
+            return SUPERSTARS.length - 1;
+        }
+
+        let cawDraft = null;
+        let cawDeleteArmed = false;
+        function openCawEditor(id) {
+            const existing = id ? cawList.find(c => c.id === id) : null;
+            if (!existing && cawList.length >= CAW_LIMIT) {
+                showCawModal();
+                document.getElementById('cawError').textContent = `You can have up to ${CAW_LIMIT} created superstars. Edit or delete one first.`;
+                cawDraft = null;
+                return;
+            }
+            cawDraft = existing ? Object.assign({}, existing) : {
+                id: 'caw_' + Date.now().toString(36), name: '', nick: '', gender: 'male', skin: 1,
+                hair: 'crew_fade', hairColor: '#111113', color: '#dc2626', trim: '#111115',
+                finisher: 'spear', focus: 'power', wins: 0, losses: 0
+            };
+            cawDeleteArmed = false;
+            document.getElementById('cawTitle').textContent = existing ? 'EDIT SUPERSTAR' : 'CREATE A SUPERSTAR';
+            document.getElementById('cawName').value = cawDraft.name;
+            document.getElementById('cawNick').value = cawDraft.nick;
+            document.getElementById('cawFinisher').value = cawDraft.finisher;
+            document.getElementById('cawFocus').value = cawDraft.focus;
+            document.getElementById('btnCawDelete').classList.toggle('hidden', !existing);
+            document.getElementById('btnCawDelete').textContent = 'Delete';
+            document.getElementById('cawError').textContent = '';
+            showCawModal();
+            renderCawEditor();
+        }
+
+        function showCawModal() {
+            document.getElementById('cawModal').classList.remove('hidden');
+        }
+
+        function swatchRow(containerId, options, current, onPick, isColor) {
+            const box = document.getElementById(containerId);
+            box.innerHTML = '';
+            options.forEach(([value, label]) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                const on = value === current;
+                if (isColor) {
+                    b.className = `w-8 h-8 rounded-full border-2 ${on ? 'border-white ring-2 ring-red-500' : 'border-zinc-700'}`;
+                    b.style.background = label;
+                    b.setAttribute('aria-label', 'Colour ' + label);
+                } else {
+                    b.className = `px-3 py-1.5 rounded-lg font-bold ${on ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`;
+                    b.textContent = label;
+                }
+                b.addEventListener('click', () => { onPick(value); renderCawEditor(); });
+                box.appendChild(b);
+            });
+        }
+
+        function renderCawEditor() {
+            const d = cawDraft;
+            if (!d) return;
+            swatchRow('cawGender', [['male', "Men's"], ['female', "Women's"]], d.gender, v => {
+                if (v !== d.gender) { d.gender = v; d.hair = CAW_HAIR[v][0][0]; }
+            });
+            swatchRow('cawSkin', CAW_SKINS.map((sk, i) => [i, sk[0]]), d.skin, v => { d.skin = v; }, true);
+            swatchRow('cawHair', CAW_HAIR[d.gender], d.hair, v => { d.hair = v; });
+            swatchRow('cawHairColor', CAW_HAIR_COLORS.map(c => [c, c]), d.hairColor, v => { d.hairColor = v; }, true);
+            swatchRow('cawColor', CAW_GEAR_COLORS.map(c => [c, c]), d.color, v => { d.color = v; }, true);
+            swatchRow('cawTrim', CAW_GEAR_COLORS.map(c => [c, c]), d.trim, v => { d.trim = v; }, true);
+            const star = buildCustomStar(d);
+            renderSuperstarPortrait(document.getElementById('cawPreview'), star, 'determined', false);
+            document.getElementById('cawPreviewName').textContent = star.name;
+            const labels = { power: 'Power', speed: 'Speed', grapple: 'Grapple', stamina: 'Stamina' };
+            document.getElementById('cawPreviewStats').innerHTML = STAT_KEYS.map(k =>
+                `<span class="${k === d.focus ? 'text-red-400 font-bold' : ''}">${labels[k]}${k === d.focus ? ' ★' : ''}</span><span class="text-right font-bold">${star.stats[k]}</span>`
+            ).join('') + `<span class="text-zinc-400">Record</span><span class="text-right font-bold">${d.wins || 0}-${d.losses || 0}</span>`;
+        }
+
+        function saveCawDraft() {
+            const d = cawDraft;
+            if (!d) return;
+            d.name = document.getElementById('cawName').value.trim().replace(/\s+/g, ' ');
+            d.nick = document.getElementById('cawNick').value.trim();
+            d.finisher = document.getElementById('cawFinisher').value;
+            d.focus = document.getElementById('cawFocus').value;
+            if (!/^[A-Za-z0-9 .'-]{2,16}$/.test(d.name)) {
+                document.getElementById('cawError').textContent = 'Use 2 to 16 letters, numbers or spaces for the ring name.';
+                return;
+            }
+            const i = cawList.findIndex(c => c.id === d.id);
+            if (i >= 0) cawList[i] = d; else cawList.push(d);
+            saveCaws(cawList);
+            rebuildRoster();
+            selectedP1Index = SUPERSTARS.findIndex(st => st.id === d.id);
+            activeSelectingSlot = 2;
+            updateRosterHighlights();
+            document.getElementById('cawModal').classList.add('hidden');
+            sfx.playBell();
+        }
+
+        function deleteCawDraft() {
+            const btn = document.getElementById('btnCawDelete');
+            if (!cawDeleteArmed) {
+                cawDeleteArmed = true;
+                btn.textContent = 'Tap again to delete';
+                return;
+            }
+            cawList = cawList.filter(c => c.id !== cawDraft.id);
+            saveCaws(cawList);
+            rebuildRoster();
+            document.getElementById('cawModal').classList.add('hidden');
+        }
+
+        function initCawEditor() {
+            const sel = document.getElementById('cawFinisher');
+            sel.innerHTML = CAW_FINISHERS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+            document.getElementById('btnCloseCaw').addEventListener('click', () => document.getElementById('cawModal').classList.add('hidden'));
+            document.getElementById('btnCawSave').addEventListener('click', saveCawDraft);
+            document.getElementById('btnCawDelete').addEventListener('click', deleteCawDraft);
+            ['cawName', 'cawNick'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+                if (!cawDraft) return;
+                cawDraft.name = document.getElementById('cawName').value;
+                cawDraft.nick = document.getElementById('cawNick').value;
+                renderCawEditor();
+            }));
+            ['cawFinisher', 'cawFocus'].forEach(id => document.getElementById(id).addEventListener('change', () => {
+                if (!cawDraft) return;
+                cawDraft.finisher = document.getElementById('cawFinisher').value;
+                cawDraft.focus = document.getElementById('cawFocus').value;
+                renderCawEditor();
+            }));
+        }
+
+        // After a match vs the CPU or online, a created superstar gains power from a win
+        function applyCawProgress(winner) {
+            const note = document.getElementById('winnerCawNote');
+            note.classList.add('hidden');
+            const counts = matchMode === 'cpu' || netMultiplayer.isHost || netMultiplayer.isClient;
+            if (!counts || !p1Fighter) return;
+            const me = netMultiplayer.isClient ? p2Fighter : p1Fighter;
+            const c = cawList.find(x => x.id === me.star.id);
+            if (!c) return;
+            const before = cawStats(c);
+            if (winner === me) c.wins = (c.wins || 0) + 1; else c.losses = (c.losses || 0) + 1;
+            saveCaws(cawList);
+            const after = cawStats(c);
+            const gains = STAT_KEYS.filter(k => after[k] > before[k]).map(k => `${k.toUpperCase()} ${after[k]}`);
+            note.textContent = winner === me
+                ? (gains.length ? `⬆ POWER UP! ${gains.join(' • ')}` : `${c.name.toUpperCase()} IS AT MAX POWER!`)
+                : `${c.name.toUpperCase()} record: ${c.wins}-${c.losses}. Win to power up!`;
+            note.classList.remove('hidden');
+            rebuildRoster();
         }
 
         function updateRosterHighlights() {
@@ -1943,7 +2468,7 @@
                 if (this.state === 'being_grappled') {
                     this.beingGrappledSafetyTimer += dt;
                     const attackerActive = opponent && (opponent.state === 'grapple_seq' || opponent.state === 'finisher_seq') && opponent.lockedTarget === this;
-                    if (!attackerActive || this.beingGrappledSafetyTimer > 1.6) {
+                    if (!attackerActive || this.beingGrappledSafetyTimer > 2.4) {
                         // Safety release if grapple was interrupted or timed out
                         this.state = 'idle';
                         this.stateDuration = 0;
@@ -2131,6 +2656,49 @@
                         this.y = RING_FLOOR_Y;
                         this.completeLockedSlam(victim);
                     }
+                } else if (fType === 'powerbomb') {
+                    // Lift onto the shoulders, hold high, then drive the opponent back-first into the mat
+                    if (p < 0.4) {
+                        const t = p / 0.4;
+                        victim.x = this.x + this.facing * (40 - t * 30);
+                        victim.y = this.y - t * 125;
+                        victim.bodyRotation = -this.facing * t * 0.6;
+                    } else if (p < 0.6) {
+                        victim.x = this.x + this.facing * 10;
+                        victim.y = this.y - 125 - Math.sin((p - 0.4) * 30) * 3;
+                        victim.bodyRotation = -this.facing * 0.6;
+                    } else {
+                        const t = (p - 0.6) / 0.4;
+                        victim.x = this.x + this.facing * (10 + t * 50);
+                        victim.y = this.y - 125 + Math.pow(t, 1.6) * 125;
+                        victim.bodyRotation = -this.facing * (0.6 + t * 0.97);
+                        if (t >= 0.9 && !this.hitRegistered) this.completeLockedSlam(victim);
+                    }
+                } else if (fType === 'submission') {
+                    // Takedown, then a leg lock on the mat: damage builds while the opponent struggles
+                    const t = Math.min(1, p / 0.2);
+                    victim.x = this.x + this.facing * 62;
+                    victim.y = this.y + 60 * t;
+                    victim.bodyRotation = this.facing * (Math.PI / 2) * t;
+                    if (p > 0.25 && !this.hitRegistered) {
+                        this.subTick = (this.subTick || 0) + dt;
+                        if (this.subTick > 0.3) {
+                            this.subTick = 0;
+                            victim.health = Math.max(0, victim.health - 14 * this.powerMultiplier);
+                            spawnParticles(victim.x, RING_FLOOR_Y - 25, '#ef4444', 4);
+                            triggerCameraShake(4);
+                            sfx.playStrike(false);
+                        }
+                        if (p > 0.45 && !this.tapText) {
+                            this.tapText = true;
+                            spawnFloatingText(victim.x, RING_FLOOR_Y - 120, 'WILL THEY TAP?!', '#f87171');
+                            sfx.pop(0.8);
+                        }
+                    }
+                    if (p >= 0.97 && !this.hitRegistered) {
+                        this.tapText = false;
+                        this.completeLockedSlam(victim);
+                    }
                 } else if (fType === 'tombstone') {
                     // Undertaker Inverted Tombstone Piledriver!
                     if (p < 0.55) {
@@ -2238,7 +2806,7 @@
                         const isFin = this.state === 'finisher';
                         this.state = isFin ? 'finisher_seq' : 'grapple_seq';
                         this.stateTimer = 0;
-                        this.stateDuration = isFin ? 1.15 : 0.88;
+                        this.stateDuration = isFin ? (this.star.finisherType === 'submission' ? 1.9 : 1.15) : 0.88;
                         this.hitRegistered = false; // Will trigger on canvas impact at end of sequence
                         this.lockedTarget = opponent;
                         opponent.state = 'being_grappled';
@@ -2422,7 +2990,15 @@
                     this.expression = 'roar';
                 } else if (this.state === 'grapple_seq' || this.state === 'finisher_seq') {
                     const fType = this.state === 'finisher_seq' ? this.star.finisherType : 'suplex';
-                    if (fType === 'spear') {
+                    if (fType === 'submission') {
+                        // Sitting back, legs wrapped around the opponent's leg
+                        torsoLean = -0.75;
+                        torsoY = -62;
+                        lThigh = -78; lShin = 12;
+                        rThigh = -62; rShin = 22;
+                        lShoulder = -40; lElbow = -50;
+                        rShoulder = -30; rElbow = -60;
+                    } else if (fType === 'spear') {
                         // Horizontal Diving Spear Pose
                         torsoLean = 1.25 * swing;
                         torsoY = -75;
@@ -2593,7 +3169,7 @@
 
                 // V-Taper Muscular Torso
                 const sw = 24 * this.star.bodyScale.shoulder;
-                const torsoGrad = cachedGradient(ctx, 'torso|' + this.star.id, () => {
+                const torsoGrad = cachedGradient(ctx, 'torso|' + this.star.skinBase + '|' + sw, () => {
                     const g = ctx.createLinearGradient(-sw, -28, sw, 24);
                     g.addColorStop(0, this.star.skinShadow);
                     g.addColorStop(0.5, this.star.skinHighlight);
@@ -2634,6 +3210,20 @@
                         ctx.fillStyle = 'rgba(20,20,25,0.6)';
                         ctx.fillRect(-2, -16, 4, 28);
                     }
+                }
+
+                // Women's ring-gear top over the chest
+                if (this.star.gender === 'female') {
+                    ctx.fillStyle = this.star.attire.top || this.star.attire.trunkColor;
+                    ctx.beginPath();
+                    ctx.moveTo(-sw * 0.98, -24);
+                    ctx.quadraticCurveTo(0, -30, sw * 0.98, -24);
+                    ctx.lineTo(sw * 0.86, -3);
+                    ctx.quadraticCurveTo(0, 1, -sw * 0.86, -3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = this.star.attire.trimColor;
+                    ctx.fillRect(-sw * 0.86, -4.5, sw * 1.72, 2.5);
                 }
 
                 // 5. DETAILED REALISTIC HEAD ON NECK JOINT
@@ -3351,6 +3941,7 @@
             document.getElementById('victoryModal').classList.remove('hidden');
             document.getElementById('btnPause').classList.add('hidden');
             recordOnlineResult(winner);
+            applyCawProgress(winner);
         }
 
         /* ============================================================================
@@ -3608,7 +4199,7 @@
             showActionBanner('GET READY…');
             setCommentary(`${star1.name} vs ${star2.name}! The Undisputed Championship Main Event is underway!`);
             if (netMultiplayer.isHost) {
-                netMultiplayer.sendPacket({ type: 'match_start', p1Index: selectedP1Index, p2Index: selectedP2Index });
+                netMultiplayer.sendPacket({ type: 'match_start', p1Star: SUPERSTARS[selectedP1Index], p2Star: SUPERSTARS[selectedP2Index] });
             }
         }
 
@@ -3959,7 +4550,8 @@
         }
 
         window.onload = function () {
-            initRosterUI();
+            initCawEditor();
+            rebuildRoster();
             initOnlineServices();
             initVirtualAnalogJoystick();
 
