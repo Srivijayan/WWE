@@ -3367,12 +3367,13 @@
             const won = winner === me;
             note.textContent = 'Saving to your career…';
             note.classList.remove('hidden');
-            const result = await UGS.recordMatch({ won, finishers: me.finishersHit || 0 });
+            const result = await UGS.recordMatch({ won, finishers: me.finishersHit || 0, matchSeconds: matchTimeSeconds });
             if (!result) { note.classList.add('hidden'); return; }
             const c = UGS.state.career;
-            if (!won) note.textContent = `Career: ${c.wins} wins • ${c.losses} losses`;
+            if (result.error) note.textContent = `Result not saved: ${result.error}`;
+            else if (!result.counted) note.textContent = `Not counted on the leaderboard (${result.reason})`;
+            else if (!won) note.textContent = `Career: ${c.wins} wins • ${c.losses} losses`;
             else if (result.rank) note.textContent = `🏆 +1 WIN (${c.wins} total) • WORLD RANK #${result.rank}`;
-            else if (result.leaderboardError) note.textContent = `+1 WIN (${c.wins} total) • leaderboard unavailable`;
             else note.textContent = `+1 WIN (${c.wins} total)`;
         }
 

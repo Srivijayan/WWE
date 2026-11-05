@@ -36,7 +36,15 @@ Each browser signs in anonymously to Unity Gaming Services when the game loads. 
 
 Settings are at the top of `js/ugs.js` (project ID, environment, leaderboard ID). In the Unity Cloud dashboard the project needs: Authentication with anonymous sign-in, Cloud Save, and a leaderboard with ID `wins`, sorted highest first, keeping the best score. If anything is unreachable the game keeps working without online stats.
 
-Scores are sent from the player's browser, so a determined player could fake them. To prevent that, move score posting into a Unity Cloud Code script and block direct writes with an access policy.
+### Anti-cheat: the server records results
+
+The browser never writes scores. At the end of a match it calls the Cloud Code script `record-match` (`cloud/record-match.js`), which runs on Unity's servers. It updates the career in Protected Cloud Save data (players can read it but not change it) and posts the leaderboard score. It ignores matches shorter than 15 seconds, results sent less than 20 seconds apart, and more than 300 matches a day.
+
+One-time setup in the Unity Cloud dashboard:
+
+1. **Cloud Code → Scripts → Create script.** Name it `record-match`, type **API**, and paste in `cloud/record-match.js`.
+2. On the script's page add 3 parameters: `won` (Boolean, required), `matchSeconds` (Numeric, required), `finishers` (Numeric, optional). Save and **Publish**.
+3. Block players from posting leaderboard scores directly by applying `cloud/access-policy.json` with the UGS command-line tool: `ugs access upsert-project-policy cloud/access-policy.json`.
 
 ## Files
 

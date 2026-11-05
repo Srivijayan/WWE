@@ -3,18 +3,23 @@
    Anonymous sign-in, career stats in Cloud Save, wins leaderboard, player names.
    Every call fails quietly: the game always works offline.
    API references: docs.unity.com/en-us/oas-player-auth-client, oas-leaderboards,
-   oas-cloud-save-data-client, oas-player-names (all v1).
+   oas-cloud-save-data-client, oas-player-names (all v1), and Cloud Code scripts (run-scripts/rest-api).
+   Results go through the Cloud Code script so players can't post their own scores;
+   the career lives in Protected Cloud Save data, which players can read but not write.
    ============================================================================ */
 (function () {
     const CONFIG = {
         projectId: 'b2a96c9a-ae58-42d7-a9b9-c9cdcefe0c5e',
         environment: 'production',
-        leaderboardId: 'wins'
+        leaderboardId: 'wins',
+        // Server-side script that records results (cloud/record-match.js); the browser never writes scores itself
+        recordScript: 'record-match'
     };
     const AUTH = 'https://player-auth.services.api.unity.com/v1';
     const LEADERBOARDS = `https://leaderboards.services.api.unity.com/v1/projects/${CONFIG.projectId}/leaderboards/${CONFIG.leaderboardId}`;
     const SAVE = `https://cloud-save.services.api.unity.com/v1/data/projects/${CONFIG.projectId}/players`;
     const NAMES = 'https://social.services.api.unity.com/v1/names';
+    const CLOUD_CODE = `https://cloud-code.services.api.unity.com/v1/projects/${CONFIG.projectId}/scripts`;
     const STORE_KEY = 'ugs-session-' + CONFIG.projectId;
     const CAREER_KEY = 'career';
 
@@ -99,16 +104,9 @@
     }
 
     async function loadCareer() {
-        const res = await api(`${SAVE}/${state.playerId}/items?keys=${CAREER_KEY}`);
+        const res = await api(`${SAVE}/${state.playerId}/protected/items?keys=${CAREER_KEY}`);
         const item = res && res.results && res.results.find(i => i.key === CAREER_KEY);
         state.career = Object.assign(emptyCareer(), item ? item.value : {});
-    }
-
-    async function saveCareer() {
-        await api(`${SAVE}/${state.playerId}/items`, {
-            method: 'POST',
-            body: JSON.stringify({ key: CAREER_KEY, value: state.career })
-        });
     }
 
     async function loadName() {
@@ -143,39 +141,26 @@
         start,
         onChange(fn) { listeners.push(fn); fn(state); },
 
-        // Called once at the end of every match the local player took part in
-        async recordMatch({ won, finishers }) {
+        // Called once at the end of every match the local player took part in.
+        // Unity's server checks the result, updates the career and posts the leaderboard score.
+        async recordMatch({ won, finishers, matchSeconds }) {
             if (state.status !== 'online') return null;
-            const c = state.career;
-            c.matches++;
-            c.finishers += finishers || 0;
-            if (won) {
-                c.wins++;
-                c.streak++;
-                c.bestStreak = Math.max(c.bestStreak, c.streak);
-            } else {
-                c.losses++;
-                c.streak = 0;
-            }
-            emit();
-            const result = { saved: false, rank: null, leaderboardError: '' };
+            const result = { counted: false, reason: '', rank: null, error: '' };
             try {
-                await saveCareer();
-                result.saved = true;
+                const res = await api(`${CLOUD_CODE}/${CONFIG.recordScript}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ params: { won: !!won, finishers: finishers || 0, matchSeconds: Math.round(matchSeconds || 0) } })
+                });
+                const out = (res && res.output) || {};
+                if (out.career) state.career = Object.assign(emptyCareer(), out.career);
+                result.counted = !!out.counted;
+                result.reason = out.reason || '';
+                result.rank = out.rank || null;
+                emit();
             } catch (e) {
-                console.warn('[UGS] could not save career:', e.message);
-            }
-            if (won) {
-                try {
-                    const entry = await api(`${LEADERBOARDS}/scores/players/${state.playerId}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ score: c.wins })
-                    });
-                    result.rank = entry && typeof entry.rank === 'number' ? entry.rank + 1 : null;
-                } catch (e) {
-                    result.leaderboardError = e.message;
-                    console.warn('[UGS] leaderboard:', e.message);
-                }
+                result.error = e.status === 404 ? 'the server script isn\'t set up yet'
+                    : (e instanceof TypeError ? 'couldn\'t reach Unity\'s servers' : e.message);
+                console.warn('[UGS] could not record the match:', e.message);
             }
             return result;
         },
